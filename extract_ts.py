@@ -1,12 +1,16 @@
 
 import numpy as np
 import numpy.random as npr
-import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import mne
 import os
 import socket
+import networkx as nx
+
 from mne.minimum_norm import (apply_inverse_epochs, read_inverse_operator)
+from nitime import TimeSeries
+from nitime.analysis import MTCoherenceAnalyzer
+from nitime.viz import drawmatrix_channels
 
 # Setup paths and prepare raw data
 hostname = socket.gethostname()
@@ -21,10 +25,10 @@ else:
 
 
 
-epochs_normal = data_path + "tone_task_normal-epo.fif"
-epochs_hyp = data_path + "tone_task_hyp-epo.fif"
-inverse_normal = data_path + "tone_task_normal-inv.fif"
-inverse_hyp = data_path + "tone_task_hyp-inv.fif"
+epochs_fnormal = data_path + "tone_task_normal-epo.fif"
+epochs_fhyp = data_path + "tone_task_hyp-epo.fif"
+inverse_fnormal = data_path + "tone_task_normal-inv.fif"
+inverse_fhyp = data_path + "tone_task_hyp-inv.fif"
 # change dir to save files the rigth place
 os.chdir(data_path)
 
@@ -35,119 +39,162 @@ reject = dict(grad=4000e-13,  # T / m (gradiometers)
 
 
 # %%
-# Using the same inverse operator when inspecting single trials Vs. evoked
 snr = 1.0  # Standard assumption for average data but using it for single trial
 lambda2 = 1.0 / snr ** 2
-
 method = "MNE"  # use dSPM method (could also be MNE or sLORETA)
 
 # Load data
+inverse_normal = read_inverse_operator(inverse_fnormal)
+inverse_hyp = read_inverse_operator(inverse_fhyp)
 
-conditions = ["normal"]
+epochs_normal = mne.read_epochs(epochs_fnormal)
+epochs_hyp = mne.read_epochs(epochs_fhyp)
 
-exec("inverse_operator = read_inverse_operator(inverse_%s)" % conditions[0])
+epochs_normal = epochs_normal["press"]
+epochs_hyp = epochs_hyp["press"]
 
-exec("epochs = mne.read_epochs(epochs_%s)" %conditions[0])
+epochs_normal.crop(tmin=0, tmax=0.5)
+epochs_hyp.crop(tmin=0, tmax=0.5)
 
 
 # %%
-stcsNormal = apply_inverse_epochs(epochs, inverse_operator, lambda2,
+stcsNormal = apply_inverse_epochs(epochs_normal, inverse_normal, lambda2,
+                                method, pick_ori="normal",
+                                return_generator=True)
+stcsHyp = apply_inverse_epochs(epochs_hyp, inverse_hyp, lambda2,
                                 method, pick_ori="normal",
                                 return_generator=True)
 
 # Get labels for FreeSurfer 'aparc' cortical parcellation with 34 labels/hemi
-labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
+labelsTest = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+                                    regexp="Brodmann",
                                     subjects_dir=subjects_dir)
-
 
 # Average the source estimates within each label using sign-flips to reduce
 # signal cancellations, also here we return a generator
-src = inverse_operator['src']
-labelTsNormal = mne.extract_label_time_course(stcsNormal, labels, src,
-                                            mode='mean_flip',
-                                            return_generator=False)
-
+src_normal = inverse_normal['src']
+labelTsNormal = mne.extract_label_time_course(stcsNormal, labels, src_normal,
+                                              mode='mean_flip',
+                                              return_generator=False)
+src_hyp = inverse_hyp['src']
+labelTsHyp = mne.extract_label_time_course(stcsHyp, labels, src_hyp,
+                                           mode='mean_flip',
+                                           return_generator=False)
 
 # %%
-from nitime import TimeSeries
-from nitime.analysis import MTCoherenceAnalyzer
-from nitime.viz import drawmatrix_channels
+f_lw, f_up = 13, 20  # lower & upper limit for frequencies
 
-f_up = 13  # upper limit
-f_lw = 8  # lower limit
+cohMatrixNormal = np.empty([np.shape(labelTsNormal)[1],
+                            np.shape(labelTsNormal)[1],
+                            np.shape(labelTsNormal)[0]])
+cohMatrixHyp = np.empty([np.shape(labelTsHyp)[1],
+                            np.shape(labelTsHyp)[1],
+                            np.shape(labelTsHyp)[0]])
 
-cohMatrixNormal = np.empty([np.shape(labelTsNormal)[1], np.shape(labelTsNormal)[1],
-                          np.shape(labelTsNormal)[0]])
 
 labels_name = []
 for label in labels:
     labels_name += [label.name]
 
-for j in range(cohMatrixNormal.shape[2]):
-    niTS = TimeSeries(labelTsNormal[j], sampling_rate=epochs.info["sfreq"])
-    niTS.metadata["roi"] = labels_name
+cohListNormal = []
+cohListHyp = []
 
-    C = MTCoherenceAnalyzer(niTS)
+for j in range(cohMatrixNormal.shape[2]):
+    nits = TimeSeries(labelTsNormal[j], 
+                      sampling_rate=epochs_normal.info["sfreq"])
+    nits.metadata["roi"] = labels_name
+
+    cohListNormal += [MTCoherenceAnalyzer(nits)]
+    
+
+for j in range(cohMatrixHyp.shape[2]):
+    nits = TimeSeries(labelTsHyp[j],
+                      sampling_rate=epochs_hyp.info["sfreq"])
+    nits.metadata["roi"] = labels_name
+
+    cohListHyp += [MTCoherenceAnalyzer(nits)]
+
 
     # confine analysis to Aplha (8  12 Hz)
-    freq_idx = np.where((C.frequencies > f_lw) * (C.frequencies < f_up))[0]
+freq_idx = np.where((cohListHyp[0].frequencies >= f_lw) * \
+                    (cohListHyp[0].frequencies <= f_up))[0]
 
     # compute average coherence &  Averaging on last dimension
-    cohMatrixNormal[:, :, j] = np.mean(C.coherence[:, :, freq_idx], -1)
+for j in range(cohMatrixHyp.shape[2]):
+    cohMatrixNormal[:, :, j] = np.mean(cohListNormal[j].coherence[:, :, freq_idx], -1)
+    cohMatrixHyp[:, :, j] = np.mean(cohListHyp[j].coherence[:, :, freq_idx], -1)
 
 
 # %%
-drawmatrix_channels(bin.astype(int), labels_name, color_anchor=0,
-                    title='MEG coherence')
+fullMatrix = np.concatenate([cohMatrixNormal, cohMatrixHyp], axis=2)
 
-plt.show()
+threshold = np.median(fullMatrix[np.nonzero(fullMatrix)]) \
+            + np.std(fullMatrix[np.nonzero(fullMatrix)])
+
+
+binMatrixNormal = cohMatrixNormal > threshold
+binMatrixHyp = cohMatrixHyp > threshold
+
+# %%
+nxNormal = []
+for j in range(binMatrixNormal.shape[2]):
+    nxNormal += [nx.from_numpy_matrix(binMatrixNormal[:, :, j])]
+
+nxHyp = []
+for j in range(binMatrixHyp.shape[2]):
+    nxHyp += [nx.from_numpy_matrix(binMatrixHyp[:, :, j])]
 
 
 # %%
-thresholdLeft = np.median(cohMatrixLeft[np.nonzero(cohMatrixLeft)]) \
-    + np.std(cohMatrixLeft[np.nonzero(cohMatrixLeft)])
-binMatrixLeft = cohMatrixLeft > thresholdLeft
+degreesHyp = []
+for j, trial in enumerate(nxHyp):
+    degreesHyp += [trial.degree()]
 
-thresholdRight = np.median(cohMatrixRight[np.nonzero(cohMatrixRight)]) \
-    + np.std(cohMatrixRight[np.nonzero(cohMatrixRight)])
-binMatrixRight = cohMatrixRight > thresholdRight
+degreesNormal = []
+for j, trial in enumerate(nxNormal):
+    degreesNormal += [trial.degree()]
 
+ccNormal = []
+for j, trial in enumerate(nxNormal):
+    ccNormal += [nx.cluster.clustering(trial)]
+ccHyp = []
+for j, trial in enumerate(nxHyp):
+    ccHyp += [nx.cluster.clustering(trial)]
 
-# %%
-import networkx as nx
+# %% Permutation test
+def permutation_resampling(case, control, num_samples, statistic):
+    """Returns p-value that statistic for case is different
+    from statistc for control."""
 
-nxLeft = []
-for j in range(binMatrixLeft.shape[2]):
-    nxLeft += [nx.from_numpy_matrix(binMatrixLeft[:, :, j])]
+    observed_diff = abs(statistic(case) - statistic(control))
+    num_case = len(case)
 
-nxRight = []
-for j in range(binMatrixRight.shape[2]):
-    nxRight += [nx.from_numpy_matrix(binMatrixRight[:, :, j])]
+    combined = np.concatenate([case, control])
+    diffs = []
+    for i in range(num_samples):
+        xs = npr.permutation(combined)
+        diff = np.mean(xs[:num_case]) - np.mean(xs[num_case:])
+        diffs.append(diff)
 
+    pval = (np.sum(diffs > observed_diff) +
+            np.sum(diffs < -observed_diff))/float(num_samples)
+    return pval, observed_diff, diffs
 
-# %%
-degreesRight = []
-for j, trial in enumerate(nxRight):
-    degreesRight += [trial.degree()]
-
-degreesLeft = []
-for j, trial in enumerate(nxLeft):
-    degreesLeft += [trial.degree()]
 
 # %%
 pvalList = []
-for degreeNumber in range(binMatrixLeft.shape[0]):
+for degreeNumber in range(binMatrixNormal.shape[0]):
 
-    postRight = np.empty(len(degreesRight))
-    for j in range(len(degreesRight)):
-        postRight[j] = degreesRight[j][degreeNumber]
+    postHyp = np.empty(len(ccHyp))
+    for j in range(len(ccHyp)):
+        postHyp[j] = ccHyp[j][degreeNumber]
 
-    postLeft = np.empty(len(degreesLeft))
-    for j in range(len(postLeft)):
-        postLeft[j] = degreesLeft[j][degreeNumber]
+    postNormal = np.empty(len(ccNormal))
+    for j in range(len(postNormal)):
+        postNormal[j] = ccNormal[j][degreeNumber]
 
     pval, observed_diff, diffs = \
-        permutation_resampling(postRight, postLeft,
+        permutation_resampling(postHyp, postNormal,
                                10000, np.mean)
 
     pvalList += [{'pval': pval, "obsDiff": observed_diff, "diffs": diffs}]
@@ -159,22 +206,23 @@ pvals = np.empty(len(pvalList))
 for j in range(len(pvals)):
     pvals[j] = pvalList[j]["pval"]
 
-corrIndex = pvals < (0.05)
+rejected, pvals_corrected = mne.stats.bonferroni_correction(pvals)
+
+corrIndex = pvals_corrected < (0.05)
 
 for i in range(62):
-    if corrIndex[i] is True:
-        print labels_names[i], \
+    if corrIndex[i] == True:
+        print labels_name[i], \
             "pval:", pvalList[i]["pval"], \
             "observed differnce:", pvalList[i]["obsDiff"], \
             "mean random difference:", np.asarray(pvalList[i]["diffs"]).mean()
 
-
 # %%
-rejected, pvals_corrected = sm.stats.fdrcorrection(pvals)
+rejected, pvals_corrected = mne.stats.fdr_correction(pvals)
 
 corrIndex = pvals_corrected < 0.05
 
 for i in range(62):
-    if corrIndex[i] is True:
-        print RowNames[i], \
+    if corrIndex[i] == True:
+        print labels_name[i], \
             "pval:", pvals_corrected[i]
