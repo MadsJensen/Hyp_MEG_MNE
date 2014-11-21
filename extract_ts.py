@@ -9,7 +9,7 @@ import networkx as nx
 from mne.minimum_norm import (apply_inverse_epochs, read_inverse_operator)
 from mne.baseline import rescale
 from nitime import TimeSeries
-from nitime.analysis import CoherenceAnalyzer
+from nitime.analysis import MTCoherenceAnalyzer
 
 # Setup paths and prepare raw data
 hostname = socket.gethostname()
@@ -117,7 +117,7 @@ for j in range(len(labelTsNormal)):
                       sampling_rate=epochs_normal.info["sfreq"])
     nits.metadata["roi"] = labels_name
 
-    cohListNormal += [CoherenceAnalyzer(nits)]
+    cohListNormal += [MTCoherenceAnalyzer(nits)]
 
 
 for j in range(len(labelTsHyp)):
@@ -125,7 +125,7 @@ for j in range(len(labelTsHyp)):
                       sampling_rate=epochs_hyp.info["sfreq"])
     nits.metadata["roi"] = labels_name
 
-    cohListHyp += [CoherenceAnalyzer(nits)]
+    cohListHyp += [MTCoherenceAnalyzer(nits)]
 
 # %% extract coherence values
 f_lw, f_up = 30, 50  # lower & upper limit for frequencies
