@@ -36,11 +36,10 @@ reject = dict(grad=4000e-13,  # T / m (gradiometers)
               #  eog=250e-6  # uV (EOG channels)
               )
 
-
 # %%
 snr = 1.0  # Standard assumption for average data but using it for single trial
 lambda2 = 1.0 / snr ** 2
-method = "MNE"  # use dSPM method (could also be MNE or sLORETA)
+method = "MNE"
 
 # Load data
 inverse_normal = read_inverse_operator(inverse_fnormal)
@@ -69,7 +68,7 @@ labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
                                     regexp="Brodmann",
                                     subjects_dir=subjects_dir)
 
-# Average the source estimates within each label using sign-flips to reduce
+# Average the source estimates within eachh label using sign-flips to reduce
 # signal cancellations, also here we return a generator
 src_normal = inverse_normal['src']
 labelTsNormal = mne.extract_label_time_course(stcsNormal, labels,
@@ -94,7 +93,7 @@ for j in range(len(labelTsHyp)):
 
 # crop zscored TS
 fromTime = np.argmax(epochs_normal.times == 0)
-toTime = np.argmax(epochs_normal.times == 0.5)
+toTime = np.argmax(epochs_normal.times == 0.7)
 
 labelTsNormalZscoreCrop = []
 for j in range(len(labelTsNormalZscore)):
@@ -113,7 +112,7 @@ cohListNormal = []
 cohListHyp = []
 
 for j in range(len(labelTsNormal)):
-    nits = TimeSeries(labelTsNormalZscore[j],
+    nits = TimeSeries(labelTsNormalZscoreCrop[j],
                       sampling_rate=epochs_normal.info["sfreq"])
     nits.metadata["roi"] = labels_name
 
@@ -121,14 +120,14 @@ for j in range(len(labelTsNormal)):
 
 
 for j in range(len(labelTsHyp)):
-    nits = TimeSeries(labelTsHypZscore[j],
+    nits = TimeSeries(labelTsHypZscoreCrop[j],
                       sampling_rate=epochs_hyp.info["sfreq"])
     nits.metadata["roi"] = labels_name
 
     cohListHyp += [MTCoherenceAnalyzer(nits)]
 
 # %% extract coherence values
-f_lw, f_up = 30, 50  # lower & upper limit for frequencies
+f_lw, f_up = 52, 90 # lower & upper limit for frequencies
 
 cohMatrixNormal = np.empty([len(labels_name),
                             len(labels_name),
@@ -207,23 +206,41 @@ def permutation_resampling(case, control, num_samples, statistic):
     return pval, observed_diff, diffs
 
 
-# %%
+# %% Degress
 pvalList = []
 for degreeNumber in range(binMatrixHyp.shape[0]):
 
     postHyp = np.empty(len(degreesHyp))
-    for j in range(len(ccHyp)):
-        postHyp[j] = ccHyp[j][degreeNumber]
+    for j in range(len(postHyp)):
+        postHyp[j] = degreesHyp[j][degreeNumber]
 
     postNormal = np.empty(len(degreesNormal))
     for j in range(len(postNormal)):
-        postNormal[j] = ccNormal[j][degreeNumber]
+        postNormal[j] = degreesNormal[j][degreeNumber]
 
     pval, observed_diff, diffs = \
         permutation_resampling(postHyp, postNormal,
                                10000, np.mean)
 
     pvalList += [{'pval': pval, "obsDiff": observed_diff, "diffs": diffs}]
+
+# %% for CC
+pvalListCC = []
+for ccNumber in range(binMatrixHyp.shape[0]):
+
+    postHyp = np.empty(len(ccHyp))
+    for j in range(len(ccHyp)):
+        postHyp[j] = ccHyp[j][ccNumber]
+
+    postNormal = np.empty(len(ccNormal))
+    for j in range(len(postNormal)):
+        postNormal[j] = ccNormal[j][ccNumber]
+
+    pval, observed_diff, diffs = \
+        permutation_resampling(postHyp, postNormal,
+                               10000, np.mean)
+
+    pvalListCC += [{'pval': pval, "obsDiff": observed_diff, "diffs": diffs}]
 
 
 # %% Correct for multiple comparisons
@@ -236,6 +253,7 @@ rejected, pvals_corrected = mne.stats.fdr_correction(pvals)
 
 corrIndex = pvals_corrected < (0.05)
 
+print "\nSignificient regions for Degrees:"
 for i in range(len(labels_name)):
     if corrIndex[i]:
         print labels_name[i], \
@@ -243,7 +261,24 @@ for i in range(len(labels_name)):
             "observed differnce:", pvalList[i]["obsDiff"], \
             "mean random difference:", np.asarray(pvalList[i]["diffs"]).mean()
 
-# %%
+# %% for CC
+# pvals = np.empty(len(pvalListCC))
+# for j in range(len(pvals)):
+#     pvals[j] = pvalListCC[j]["pval"]
+
+# rejected, pvals_corrected = mne.stats.fdr_correction(pvals)
+
+# corrIndex = pvals_corrected < (0.05)
+
+# print "\nSignificient regions for CC:"
+# for i in range(len(labels_name)):
+#     if corrIndex[i]:
+#         print labels_name[i], \
+#             "pval:", pvalList[i]["pval"], \
+#             "observed differnce:", pvalList[i]["obsDiff"], \
+#             "mean random difference:", np.asarray(pvalList[i]["diffs"]).mean()
+
+
 # rejected, pvals_corrected = mne.stats.fdr_correction(pvals)
 
 # corrIndex = pvals_corrected < 0.05
