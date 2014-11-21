@@ -65,11 +65,12 @@ for condition in conditions:
         events_corr_time[k][0] = events_corr_time[k][0] / raw.info["sfreq"]
 
     # epochs settings
-    event_id, tmin, tmax = 8, -1, 1
+    event_ids = {"Tone": 8, "press": 1}
+    tmin, tmax = -1, 1
     picks = mne.pick_types(raw.info, meg=True, eeg=False, stim=True, eog=True,
                            exclude='bads')
 
-    epochs = mne.Epochs(raw, events_corrected, event_id, tmin, tmax,
+    epochs = mne.Epochs(raw, events_corrected, event_ids, tmin, tmax,
                         proj=False, picks=picks, baseline=(None, -0.7),
                         preload=True, reject=reject)
     epochs.save("tone_task_%s-epo.fif" % (condition))
