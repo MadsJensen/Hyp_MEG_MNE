@@ -9,11 +9,13 @@ hostname = socket.gethostname()
 if hostname == "wintermute":
     data_path = "/home/mje/mnt/Hyp_meg/scratch/Tone_task_MNE/"
     subjects_dir = "/home/mje/mnt/Hyp_meg/scratch/fs_subjects_dir/"
+    n_jobs = 3
 else:
     data_path = "/scratch1/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
                 "Tone_task_MNE/"
     subjects_dir = "/scratch1/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
                    "fs_subjects_dir"
+    n_jobs = 10
 
 # change dir to save files the rigth place
 os.chdir(data_path)
@@ -39,9 +41,15 @@ epochs_hyp = epochs_hyp["press"]
 bands = dict(alpha=[8, 12], beta=[13, 20])
 
 stcs_normal = source_band_induced_power(epochs_normal, inverse_normal, bands,
-                                        n_cycles=2, use_fft=False, n_jobs=3)
+                                        n_cycles=2, use_fft=False,
+                                        baseline=(-1, -0-7),
+                                        basline_mode="zscore",
+                                        n_jobs=n_jobs)
 stcs_hyp = source_band_induced_power(epochs_hyp, inverse_hyp, bands,
-                                     n_cycles=2, use_fft=False, n_jobs=3)
+                                     n_cycles=2, use_fft=False,
+                                     baseline=(-1, -0-7),
+                                     basline_mode="zscore",
+                                     n_jobs=n_jobs)
 
 # for b, stc in stcs.iteritems():
 #     stc.save('induced_power_%s' % b)
