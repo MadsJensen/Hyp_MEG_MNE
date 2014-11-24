@@ -43,12 +43,12 @@ bands = dict(alpha=[8, 12], beta=[13, 20])
 stcs_normal = source_band_induced_power(epochs_normal, inverse_normal, bands,
                                         n_cycles=2, use_fft=False,
                                         baseline=(-1, -0-7),
-                                        basline_mode="zscore",
+                                        baseline_mode="zscore",
                                         n_jobs=n_jobs)
 stcs_hyp = source_band_induced_power(epochs_hyp, inverse_hyp, bands,
                                      n_cycles=2, use_fft=False,
                                      baseline=(-1, -0-7),
-                                     basline_mode="zscore",
+                                     baseline_mode="zscore",
                                      n_jobs=n_jobs)
 
 # for b, stc in stcs.iteritems():
