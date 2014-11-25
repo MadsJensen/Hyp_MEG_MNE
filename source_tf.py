@@ -42,6 +42,9 @@ epochs_hyp = mne.read_epochs(epochs_fhyp)
 epochs_normal = epochs_normal["press"]
 epochs_hyp = epochs_hyp["press"]
 
+labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+                                    regexp="Brodmann",
+                                    subjects_dir=subjects_dir)
 
 # Compute a source estimate per frequency band
 bands = dict(alpha=[8, 12],
@@ -133,7 +136,7 @@ plt.show()
 # %%
 # Compute Power Spectral Density of inverse solution from single epochs
 # define frequencies of interest
-fmin, fmax = 0., 70.
+fmin, fmax = 0., 90.
 bandwidth = 4.  # bandwidth of the windows in Hz
 snr = 1.0  # use smaller SNR for raw data
 lambda2 = 1.0 / snr ** 2
@@ -181,12 +184,21 @@ for i, stc in enumerate(stcs_hyp):
 
 psd_avg_hyp = np.mean(psd_hyp, axis=0)
 psd_std_hyp = np.std(psd_hyp, axis=0)
-freqs = stc.times  # the frequencies are stored here
+freqs_hyp = stc.times  # the frequencies are stored here
 
 
 plt.figure()
 plt.plot(freqs, psd_avg_normal, color="b", label="Normal")
 plt.plot(freqs, psd_avg_hyp, color="r", label="Hyp")
+hyp_limits_normal = (psd_avg_normal - psd_std_normal, 
+                     psd_avg_normal + psd_std_normal)
+plt.fill_between(freqs, hyp_limits_normal[0], y2=hyp_limits_normal[1],
+                 color='b', alpha=0.5)
+hyp_limits_hyp = (psd_avg_hyp- psd_std_hyp, 
+                  psd_avg_hyp+ psd_std_hyp)
+plt.fill_between(freqs, hyp_limits_hyp[0], y2=hyp_limits_hyp[1],
+                 color='b', alpha=0.5)
+
 plt.xlabel('Freq (Hz)')
 plt.ylabel('Power Spectral Density')
 plt.legend()
