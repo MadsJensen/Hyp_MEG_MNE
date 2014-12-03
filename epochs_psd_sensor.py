@@ -38,15 +38,16 @@ epochs_hyp.crop(0, 0.7)
 picks = mne.pick_types(epochs_normal.info, meg="grad", exclude=[])
 fmin, fmax = 2, 90  # look at frequencies between 2 and 20Hz
 n_fft = 2048  # the FFT size (n_fft). Ideally a power of 2
-psds_normal, freqs_normal = compute_epochs_psd(epochs_normal, picks=picks, 
-                                 fmin=fmin, fmax=fmax)
-#psds_normal = 20 * np.log10(psds_normal)  # scale to dB
+psds_normal, freqs_normal = compute_epochs_psd(epochs_normal, picks=picks,
+                                               fmin=fmin, fmax=fmax)
+# psds_normal = 20 * np.log10(psds_normal)  # scale to dB
 psds_avg_normal = np.mean(psds_normal, axis=0)
 
-psds_hyp, freqs_hyp = compute_epochs_psd(epochs_hyp, picks=picks, 
-                                 fmin=fmin, fmax=fmax)
-#psds_hyp = 20 * np.log10(psds_hyp)  # scale to dB
+psds_hyp, freqs_hyp = compute_epochs_psd(epochs_hyp, picks=picks,
+                                         fmin=fmin, fmax=fmax)
+# psds_hyp = 20 * np.log10(psds_hyp)  # scale to dB
 psds_avg_hyp = np.mean(psds_hyp, axis=0)
+
 
 def my_callback(ax, ch_idx):
     """

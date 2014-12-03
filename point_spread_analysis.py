@@ -54,8 +54,8 @@ forward = mne.read_forward_solution(fname_fwd, force_fixed=True,
 inverse_operator_meg = read_inverse_operator(inverse_fnormal)
 
 # read label(s)
-labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
-                                    regexp="Brodmann\.39-",
+labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
+                                    regexp="pariet",
                                     subjects_dir=subjects_dir)
 
 
@@ -84,7 +84,7 @@ fmin = 0.
 time_label = "MEG %d"
 fmax = stc_psf_meg.data[:, 0].max()
 fmid = fmax / 2.
-brain_meg = stc_psf_meg.plot(surface='pial', hemi='both',
+brain_meg = stc_psf_meg.plot(surface='inflated', hemi='both',
                              subjects_dir=subjects_dir,
                              time_label=time_label, fmin=fmin,
                              fmid=fmid, fmax=fmax,
@@ -112,7 +112,7 @@ mode = 'svd'
 n_svd_comp = 1
 
 method = 'MNE'  # can be 'MNE', 'dSPM', or 'sLORETA'
-stc_ctf_mne = cross_talk_function(inverse_operator_meg, forward, labels,
+stc_ctf_mne = cross_talk_function(inverse_operator_meg, forward, labels[0:1],
                                   method=method, lambda2=lambda2,
                                   signed=False, mode=mode,
                                   n_svd_comp=n_svd_comp)
