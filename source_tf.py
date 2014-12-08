@@ -145,8 +145,8 @@ snr = 1.0  # use smaller SNR for raw data
 lambda2 = 1.0 / snr ** 2
 method = "MNE"  # use dSPM method (could also be MNE or sLORETA)
 # compute source space psd in label
-epochs_normal.crop(0, 0.7)
-epochs_hyp.crop(0, 0.7)
+epochs_normal.crop(-0.5, 0)
+epochs_hyp.crop(-0.5 , 0)
 
 
 # Note: By using "return_generator=True" stcs will be a generator object
@@ -299,10 +299,10 @@ from sklearn.cross_validation import (cross_val_score, StratifiedKFold,
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV
 
-X = np.concatenate([psds_normal_labels_X, psds_hyp_labels_X], axis=1).T
+X = np.concatenate([psd_normal, psd_hyp], axis=0)
 X_scl = scale(X)
-y = np.concatenate([np.zeros(psds_normal_labels_X.shape[1]),
-                    np.ones(psds_hyp_labels_X.shape[1])])
+y = np.concatenate([np.zeros(psd_normal.shape[0]),
+                    np.ones(psd_hyp.shape[0])])
 
 
 X2 = X * 1e20
@@ -338,10 +338,153 @@ score, perm_scores, pval = permutation_test_score(logReg, X_scl, y,
 print "score: ", score
 
 from sklearn.linear_model import RandomizedLogisticRegression
-randomized_logistic = RandomizedLogisticRegression(C=C)
+randomized_logistic = RandomizedLogisticRegression()
 randomized_logistic.fit(X_scl, y)
 
-from sklearn.feature_selection import SelectFdr
+from sklearn.feature_selection import SelectPercentile
 from sklearn.feature_selection import chi2
 X_new = SelectFdr(chi2).fit_transform(X_scl, y)
 X_new.shape
+
+
+# %% non-active "baseline" -500 to Tone
+epochs_normal = mne.read_epochs(epochs_fnormal)
+epochs_hyp = mne.read_epochs(epochs_fhyp)
+
+epochs_normal = epochs_normal["Tone"]
+epochs_hyp = epochs_hyp["Tone"]
+
+labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+                                    regexp="Brodmann",
+                                    subjects_dir=subjects_dir)
+
+snr = 1.0  # Standard assumption for average data but using it for single trial
+lambda2 = 1.0 / snr ** 2
+
+
+
+# %% non-active "baseline" from -500ms to tone
+
+epochs_fnormal = data_path + "tone_task_normal-epo.fif"
+epochs_fhyp = data_path + "tone_task_hyp-epo.fif"
+inverse_fnormal = data_path + "tone_task_normal-inv.fif"
+inverse_fhyp = data_path + "tone_task_hyp-inv.fif"
+
+inverse_normal = read_inverse_operator(inverse_fnormal)
+inverse_hyp = read_inverse_operator(inverse_fhyp)
+
+epochs_normal = mne.read_epochs(epochs_fnormal)
+epochs_hyp = mne.read_epochs(epochs_fhyp)
+
+epochs_normal = epochs_normal["Tone"]
+epochs_hyp = epochs_hyp["Tone"]
+
+epochs_hyp.crop(-0.5, 0)
+epochs_normal.crop(-0.5, 0)
+
+fmin, fmax = 0., 90.
+bandwidth = 2.  # bandwidth of the windows in Hz
+snr = 1.0  # use smaller SNR for raw data
+lambda2 = 1.0 / snr ** 2
+method = "MNE"  # use dSPM method (could also be MNE or sLORETA)
+
+# %% for each label
+stcs_normal = compute_source_psd_epochs(epochs_normal,
+                                        inverse_normal,
+                                        lambda2=lambda2,
+                                        method=method, fmin=fmin, fmax=fmax,
+                                        bandwidth=bandwidth,
+                                        return_generator=True)
+
+# compute average PSD over the first 10 epochs
+#n_epochs = 4
+for i, stc in enumerate(stcs_normal):
+    # if i >= n_epochs:
+    #     break
+    if i == 0:
+        psd_normal = np.mean(stc.data, axis=0)
+    else:
+        break
+
+freqs = stc.times
+    
+
+
+psds_normal_labels = np.empty([len(freqs), len(labels), len(epochs_normal)])
+
+for e, epoch in enumerate(epochs_normal):   
+     for l, label in enumerate(labels):
+         stcs_normal = compute_source_psd_epochs(epochs_normal[e],
+                                                 inverse_normal,
+                                                 lambda2=lambda2,
+                                                 label=label,
+                                                 method=method,
+                                                 fmin=fmin,fmax=fmax,
+                                                 bandwidth=bandwidth,
+                                                 return_generator=False)
+         psds_normal_labels[:, l, e] = np.mean(stcs_normal[0].data, axis=0)
+
+
+psds_hyp_labels = np.empty([len(freqs), len(labels), len(epochs_hyp)])
+
+for e, epoch in enumerate(epochs_hyp):   
+     for l, label in enumerate(labels):
+         stcs_hyp = compute_source_psd_epochs(epochs_hyp[e],
+                                              inverse_hyp,
+                                              lambda2=lambda2,
+                                              label=label,
+                                              method=method,
+                                              fmin=fmin,fmax=fmax,
+                                              bandwidth=bandwidth,
+                                              return_generator=False)
+         psds_hyp_labels[:, l, e] = np.mean(stcs_hyp[0].data, axis=0)
+
+
+# reshape results arrays
+psds_normal_labels_X = np.empty([psds_normal_labels.shape[0] * 
+                                psds_normal_labels.shape[1], 
+                                psds_normal_labels.shape[2]])
+                                
+for j in range(psds_normal_labels.shape[2]):
+    psds_normal_labels_X[:, j] = psds_normal_labels[:, :, j].T.reshape(-1)
+
+
+psds_hyp_labels_X = np.empty([psds_hyp_labels.shape[0] * 
+                                psds_hyp_labels.shape[1], 
+                                psds_hyp_labels.shape[2]])
+                                
+for j in range(psds_hyp_labels.shape[2]):
+    psds_hyp_labels_X[:, j] = psds_hyp_labels[:, :, j].T.reshape(-1)
+
+
+
+# mvpa analysis
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import scale
+from sklearn.cross_validation import (cross_val_score, StratifiedKFold,
+                                      permutation_test_score, LeaveOneOut)
+
+
+X = np.concatenate([psds_normal_labels_X, psds_hyp_labels_X], axis=1).T
+X_scl = scale(X)
+y = np.concatenate([np.zeros(psds_normal_labels_X.shape[1]),
+                    np.ones(psds_hyp_labels_X.shape[1])])
+cv = StratifiedKFold(y, 10)
+llo = LeaveOneOut(len(y))
+
+# ### Log Reg ####
+logReg = LogisticRegression()
+
+cross_score_LR = cross_val_score(gnb, X_scl, y, scoring="accuracy",
+                                 cv=cv, n_jobs=n_jobs, verbose=True)
+
+print "Cross val score: ", cross_score_LR.mean()
+print "The different cross_scores: ", cross_score_LR
+
+
+score, perm_scores, pval = permutation_test_score(gnb, X_scl, y,
+                                                  scoring="accuracy",
+                                                  cv=cv, n_permutations=100,
+                                                  n_jobs=n_jobs,
+                                                  verbose=True)
+print "score: ", score

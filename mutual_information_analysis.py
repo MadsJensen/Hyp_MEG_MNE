@@ -10,7 +10,7 @@ from sklearn.metrics import mutual_info_score
 def calc_MI(x, y, bins):
     c_xy = np.histogram2d(x, y, bins)[0]
     mi = mutual_info_score(None, None, contingency=c_xy)
-    return mi
+    return mi /np.log(2)
 
 
 def FDbinSize(X):
@@ -53,8 +53,8 @@ epochs_fnormal = data_path + "tone_task_normal-epo.fif"
 epochs_normal = mne.read_epochs(epochs_fnormal)
 
 # crop zscored TS
-fromTime = np.argmax(epochs_normal.times == 0)
-toTime = np.argmax(epochs_normal.times == 0.7)
+fromTime = np.argmax(epochs_normal.times == -0.5)
+toTime = np.argmax(epochs_normal.times == -0.01)
 
 
 labelTsHypZscore = np.load("labelTsHypZscore.npy")
@@ -63,20 +63,49 @@ labelTsNormalZscore = np.load("labelTsNormalZscore.npy")
 labelTsNormalZscoreCrop = labelTsNormalZscore[:, :, fromTime:toTime]
 labelTsHypZscoreCrop = labelTsHypZscore[:, :, fromTime:toTime]
 
-n_trials = labelTsNormalZscoreCrop.shape[0]
-n_labels = labelTsNormalZscoreCrop.shape[1]
-MI_results_normal = np.empty([n_labels, n_labels, n_trials])
 
-for h in range(n_trials):
+n_trials_normal = labelTsNormalZscoreCrop.shape[0]
+n_labels_normal = labelTsNormalZscoreCrop.shape[1]
+MI_results_normal = np.empty([n_labels_normal, n_labels_normal, n_trials_normal])
+
+n_trials_hyp = labelTsHypZscoreCrop.shape[0]
+n_labels_hyp = labelTsHypZscoreCrop.shape[1]
+MI_results_hyp = np.empty([n_labels_hyp, n_labels_hyp, n_trials_hyp])
+
+# calculate the number of bins
+bins = np.empty(0)
+for t in range(n_trials_normal):
+    for l in range(n_labels_normal):
+        bins = np.append(bins, FDbinSize(labelTsNormalZscoreCrop[t, l, :]))
+for t in range(n_trials_hyp):
+    for l in range(n_labels_hyp):
+        bins = np.append(bins, FDbinSize(labelTsHypZscoreCrop[t, l, :]))
+
+bestBinsize = np.ceil(np.mean(bins))
+
+# calc MI for normal
+for h in range(n_trials_normal):
     counter = 0
-    tmpResult = np.empty([n_labels * n_labels])
-    for j in range(n_labels):
-        for k in range(n_labels):
+    tmpResult = np.empty([n_labels_normal * n_labels_normal])
+    for j in range(n_labels_normal):
+        for k in range(n_labels_normal):
             tmpResult[counter] = (calc_MI(labelTsNormalZscoreCrop[h, j, :],
-                                          labelTsNormalZscoreCrop[h, k, :], 20)) \
-                / np.log(2)
+                                          labelTsNormalZscoreCrop[h, k, :],
+                                          bestBinsize))
             counter += 1
-    MI_results_normal[:, :, h] = np.reshape(tmpResult, [n_labels, n_labels])
+    MI_results_normal[:, :, h] = np.reshape(tmpResult, [n_labels_normal,
+                                            n_labels_normal])
 
-for j in range(n_trials):
-    FDbinSize(labelTsNormalZscoreCrop[0, j, :])
+# calc MI for Hyp
+for h in range(n_trials_hyp):
+    counter = 0
+    tmpResult = np.empty([n_labels_hyp * n_labels_hyp])
+    for j in range(n_labels_hyp):
+        for k in range(n_labels_hyp):
+            tmpResult[counter] = (calc_MI(labelTsHypZscoreCrop[h, j, :],
+                                          labelTsHypZscoreCrop[h, k, :],
+                                          bestBinsize))
+            counter += 1
+    MI_results_hyp[:, :, h] = np.reshape(tmpResult, [n_labels_hyp,
+                                            n_labels_hyp])
+
