@@ -45,8 +45,8 @@ inverse_hyp = read_inverse_operator(inverse_fhyp)
 epochs_normal = mne.read_epochs(epochs_fnormal)
 epochs_hyp = mne.read_epochs(epochs_fhyp)
 
-epochs_normal = epochs_normal["press"]
-epochs_hyp = epochs_hyp["press"]
+epochs_normal = epochs_normal["Tone"]
+epochs_hyp = epochs_hyp["Tone"]
 
 # epochs_normal.crop(tmin=0, tmax=0.5)
 # epochs_hyp.crop(tmin=0, tmax=0.5)
@@ -89,5 +89,5 @@ for j in range(len(labelTsHyp)):
                                  baseline=(None, -0.7), mode="zscore")]
 
 
-np.save("labelTsHypZscore.npy", labelTsHypZscore)
-np.save("labeltsnormalzscore", labelTsNormalZscore)
+np.save("labelTsHypToneZscore.npy", labelTsHypZscore)
+np.save("labeltsnormalTonezscore", labelTsNormalZscore)
