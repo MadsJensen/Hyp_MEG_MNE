@@ -1,12 +1,12 @@
-# import cPickle
+import cPickle as Pickle
 import os
 import socket
 
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import mne
 import numpy as np
 from mne.minimum_norm import (read_inverse_operator,
-                              # source_band_induced_power,
+                              source_band_induced_power,
                               compute_source_psd_epochs)
 
 
@@ -39,8 +39,8 @@ inverse_hyp = read_inverse_operator(inverse_fhyp)
 epochs_normal = mne.read_epochs(epochs_fnormal)
 epochs_hyp = mne.read_epochs(epochs_fhyp)
 
-epochs_normal = epochs_normal["press"]
-epochs_hyp = epochs_hyp["press"]
+epochs_normal = epochs_normal["Tone"]
+epochs_hyp = epochs_hyp["Tone"]
 
 labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
                                     regexp="Brodmann",
@@ -50,49 +50,101 @@ snr = 1.0  # Standard assumption for average data but using it for single trial
 lambda2 = 1.0 / snr ** 2
 
 # %%
-# # Compute a source estimate per frequency band
-# bands = dict(alpha=[8, 12],
-#              beta=[13, 20])
-
-# #             gamma_low=[30, 48],
-# #             gamma_high=[52, 90])
+# Compute a source estimate per frequency band
+bands = dict(alpha=[8, 12],
+             beta=[13, 25],
+             gamma_low=[30, 48],
+             gamma_high=[52, 90])
 
 
 # stcs_normal = []
 # for j in range(len(epochs_normal)):
 #     stcs_normal += [source_band_induced_power(epochs_normal[j],
-#                                           inverse_normal,
+#                                               inverse_normal,
 #                                               bands,
 #                                               lambda2=lambda2,
 #                                               method="MNE",
-#                                               n_cycles=2,
-#                                               use_fft=False,
-#                                               baseline=(-0.9, -0.7),
-#                                               baseline_mode="zscore",
-#                                               n_jobs=n_jobs)]
+#                                           n_cycles=2,
+#                                           use_fft=False,
+#                                           baseline=(-0.95, -0.7),
+#                                           baseline_mode="zscore",
+#                                           n_jobs=1)]
 
-# stcs_hyp = []
-# for j in range(len(epochs_hyp)):
-#     stcs_hyp += [source_band_induced_power(epochs_hyp[j], inverse_hyp,
-#                                            bands,
-#                                            lambda2=lambda2,
-#                                            method="MNE",
-#                                            n_cycles=2, use_fft=False,
-#                                            baseline=(-0.9, -0.7),
-#                                            baseline_mode="zscore",
-#                                            n_jobs=n_jobs)]
+stcs_hyp = []
+for j in range(len(epochs_hyp)):
+    stcs_hyp += [source_band_induced_power(epochs_hyp[j], inverse_hyp,
+                                           bands,
+                                           lambda2=lambda2,
+                                           method="MNE",
+                                           n_cycles=2, use_fft=False,
+                                           baseline=(-0.95, -0.7),
+                                           baseline_mode="zscore",
+                                           n_jobs=1)]
 
 
-# for j, stc in enumerate(stcs_hyp):
-#     stc["alpha"].crop(-0.1, 0.7)
-#     stc["beta"].crop(-0.1, 0.7)
+# for j, stc in enumerate(stcs_normal):
+#     stc["alpha"].crop(-0.5, 0)
+#     stc["beta"].crop(-0.5, 0)
+#     stc["gamma_low"].crop(-0.5, 0)
+#     stc["gamma_high"].crop(-0.5, 0)
 
-# cPickle.dump(stcs_normal, open("stcs_normal_souce_induced_A_B.p", "wb"))
-# cPickle.dump(stcs_hyp, open("stcs_hyp_souce_induced_A_B.p", "wb"))
+bands = ["alpha", "beta", "gamma_low", "gamma_high"]    
+for band in bands:
+    print band
+    for stc in stcs_hyp:
+        stc["%s" % band].crop(-0.5, 0)
+
+for band in bands:
+    print band    
+    stcs_normal_alpha = []
+    for stc in stcs_hyp:
+        stcs_normal_alpha += [stc["%s" %(band)]] 
+
+    Pickle.dump(stcs_normal_alpha,
+                open("stcs_hyp_tone_souce_induced_%s_-05-0.p" % band, "wb" ))
+
+
+# Pickle.dump(stcs_hyp, open("stcs_hyp_source_tone_induced_A_B_Gl_Gu-05-0.p", "wb"))
 
 # for b, stc in stcs.iteritems():
 #     stc.save('induced_power_%s' % b)
 
+
+# %% extract labels
+src_normal = inverse_normal['src']
+
+stcs_normal_alpha = []
+stcs_normal_beta = []
+for stc in stcs_normal:
+    stcs_normal_alpha += [stc["alpha"]]
+    stcs_normal_beta += [stc["beta"]]
+
+labelTsNormal = mne.extract_label_time_course(stcs_normal_alpha, labels,
+                                              src_normal,
+                                              mode='mean_flip',
+                                              return_generator=False)
+
+labelTsNormalBeta = mne.extract_label_time_course(stcs_normal_beta, labels,
+                                                  src_normal,
+                                                  mode='mean_flip',
+                                                  return_generator=False)
+
+src_hyp = inverse_hyp['src']
+stcs_hyp_alpha = []
+stcs_hyp_beta = []
+for stc in stcs_hyp:
+    stcs_hyp_alpha += [stc["alpha"]]
+    stcs_hyp_beta += [stc["beta"]]
+    
+labelTsHyp = mne.extract_label_time_course(stcs_hyp_alpha, labels,
+                                              src_hyp,
+                                              mode='mean_flip',
+                                              return_generator=False)
+
+labelTsHypBeta = mne.extract_label_time_course(stcs_hyp_beta, labels,
+                                           src_hyp,
+                                           mode='mean_flip',
+                                           return_generator=False)
 
 ###############################################################################
 # plot mean power
@@ -147,8 +199,8 @@ snr = 1.0  # use smaller SNR for raw data
 lambda2 = 1.0 / snr ** 2
 method = "MNE"  # use dSPM method (could also be MNE or sLORETA)
 # compute source space psd in label
-epochs_normal.crop(0, 0.5)
-epochs_hyp.crop(0, 0.5)
+epochs_normal.crop(-0.5, 0)
+epochs_hyp.crop(-0.5, 0)
 
 
 # Note: By using "return_generator=True" stcs will be a generator object
@@ -263,6 +315,7 @@ for j in range(psds_hyp_labels.shape[2]):
 
 # %% stats
 from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import MultinomialNB
 from sklearn.preprocessing import scale
 from sklearn.cross_validation import (cross_val_score, StratifiedKFold,
                                       permutation_test_score, LeaveOneOut)
@@ -279,21 +332,22 @@ X2 = X * 1e20
 X2_scl = scale(X2)
 # ### CV ####
 cv = StratifiedKFold(y, 10)
-llo = LeaveOneOut(len(y))
+loo = LeaveOneOut(len(y))
 
 logistic = LogisticRegression()
 pipe = Pipeline(steps=[('logistic', logistic)])
 Cs = np.logspace(-5, 5, 25)
 estimator = GridSearchCV(pipe, dict(logistic__C=Cs))
-estimator.fit(X_scl, y)
+estimator.fit(X2, y)
 
 C = estimator.best_params_.values()[0]
 
 
 # ### Log Reg ####
 logReg = LogisticRegression()
+mnb = MultinomialNB()
 
-cross_score_LR = cross_val_score(logReg, X, y, scoring="accuracy",
+cross_score_LR = cross_val_score(logReg, X2, y, scoring="accuracy",
                                  cv=cv, n_jobs=n_jobs, verbose=True)
 
 print "Cross val score: ", cross_score_LR.mean()
@@ -309,7 +363,7 @@ print "score: ", score, "pval: ", pval
 
 from sklearn.linear_model import RandomizedLogisticRegression
 randomized_logistic = RandomizedLogisticRegression()
-randomized_logistic.fit(X, y)
+randomized_logistic.fit(X2, y)
 
 # from sklearn.feature_selection import SelectPercentile
 # from sklearn.feature_selection import chi2
