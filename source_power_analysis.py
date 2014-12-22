@@ -55,7 +55,7 @@ labels_name = []
 for label in labels:
     labels_name += [label.name]
 
-bands = ["alpha", "beta", "gamma_low"]
+bands = ["beta", "gamma_low"]
 
 for band in bands:
     # load source power files
@@ -102,7 +102,7 @@ for band in bands:
     bestBinsize = np.ceil(np.mean(bins))
 
     # calc MI for normal
-    print "\n************* \ncalculating MI for normal\n *************"
+    print "\n************* \ncalculating MI for normal\n*************"
     MI_normal = np.empty([n_labels_normal, n_labels_normal,
                           n_trials_normal])
 
@@ -226,7 +226,7 @@ for band in bands:
     results_degrees = []
     for i in range(len(labels_name)):
         if rejected[i]:
-            results_degrees = [{"label": labels_name[i],
+            results_degrees += [{"label": labels_name[i],
                                 "pval_corr": pvals_corrected[i],
                                 "observed_differnce": pvalListCC[i]["obsDiff"],
                                 "mean random difference":
@@ -250,12 +250,12 @@ for band in bands:
     results_CC = []
     for i in range(len(labels_name)):
         if rejectedCC[i]:
-            results_CC = [{"label": labels_name[i],
+            results_CC += [{"label": labels_name[i],
                            "pval_corr:": pvals_correctedCC[i],
                            "observed_differnce:": pvalListCC[i]["obsDiff"],
                            "mean random difference:":
                            np.asarray(pvalListCC[i]["diffs"]).mean()}]
 
-    results_all = [results_degrees, results_CC]
+    results_all = [[results_degrees], [results_CC]]
     Pickle.dump(results_all,
                 open("power_press_MI_%s_0-05.p" % band, "wb"))
