@@ -55,19 +55,22 @@ labels_name = []
 for label in labels:
     labels_name += [label.name]
 
-bands = ["alpha"]
+bands = ["alpha", "beta", "gamma_low"]
 
 for band in bands:
     # load source power files
+    print "load normal"
     stcs_normal =\
         Pickle.load(open("stcs_normal_press_source_induced_%s_0-05.p" % band,
                          "rb"))
 
+    print "load hyp"
     stcs_hyp =\
         Pickle.load(open("stcs_hyp_press_source_induced_%s_0-05.p" % band,
                          "rb"))
 
-    # Extract time-series
+    # Extract time
+    print "\n************* \nextracting TS\n ************"
     label_ts_normal = []
     for j in range(len(stcs_normal)):
         label_ts_normal += [extract_tc(stcs_normal[j][band],
@@ -75,7 +78,10 @@ for band in bands:
                                        src_normal)]
 
     label_ts_hyp = []
-    label_ts_hyp += [extract_tc(stcs_hyp, labels, src_hyp)]
+    for j in range(len(stcs_hyp)):
+        label_ts_hyp += [extract_tc(stcs_hyp[j][band],
+                                    labels,
+                                    src_hyp)]
 
     # Calculate Bin size
     n_trials_normal = 80  # labelTsNormalCrop.shape[0]
@@ -96,6 +102,7 @@ for band in bands:
     bestBinsize = np.ceil(np.mean(bins))
 
     # calc MI for normal
+    print "\n************* \ncalculating MI for normal\n *************"
     MI_normal = np.empty([n_labels_normal, n_labels_normal,
                           n_trials_normal])
 
@@ -113,6 +120,7 @@ for band in bands:
                                                     n_labels_normal])
 
     # calc MI for Hyp
+    print "\n************* \ncalculating MI for hyp\n************* "
     MI_hyp = np.empty([n_labels_hyp, n_labels_hyp, n_trials_hyp])
 
     for h in range(n_trials_hyp):
@@ -137,6 +145,7 @@ for band in bands:
     binMatrixHyp = MI_hyp > threshold
 
     # %%
+    print "\n************* \nMaking network classes\n*************"
     nxNormal = []
     for j in range(binMatrixNormal.shape[2]):
         nxNormal += [nx.from_numpy_matrix(binMatrixNormal[:, :, j])]
@@ -161,6 +170,7 @@ for band in bands:
         ccHyp += [nx.cluster.clustering(trial)]
 
     # %% Degress
+    print "\n************* \nTesting degrees\n*************"
     pvalList = []
     for degreeNumber in range(binMatrixHyp.shape[0]):
 
@@ -179,6 +189,7 @@ for band in bands:
         pvalList += [{'pval': pval, "obsDiff": observed_diff, "diffs": diffs}]
 
     # %% for CC
+    print "\n************* \nTesting cluster-coefficient\n*************"
     pvalListCC = []
     for ccNumber in range(binMatrixHyp.shape[0]):
 
@@ -221,7 +232,6 @@ for band in bands:
                                 "mean random difference":
                                 np.asarray(pvalListCC[i]["diffs"]).mean()}]
 
-    Pickle.dump(open("power_press_MI_%s_0-05.p" % band, "wb"))
 
     # %% for Cluster coefficient (CC)
     pvalsCC = np.empty(len(pvalListCC))
@@ -245,3 +255,7 @@ for band in bands:
                            "observed_differnce:": pvalListCC[i]["obsDiff"],
                            "mean random difference:":
                            np.asarray(pvalListCC[i]["diffs"]).mean()}]
+
+    results_all = [results_degrees, results_CC]
+    Pickle.dump(results_all,
+                open("power_press_MI_%s_0-05.p" % band, "wb"))
