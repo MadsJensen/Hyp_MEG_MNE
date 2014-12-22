@@ -25,3 +25,12 @@ def permutation_resampling(case, control, num_samples, statistic):
     pval = (np.sum(diffs > observed_diff) +
             np.sum(diffs < -observed_diff))/float(num_samples)
     return pval, observed_diff, diffs
+
+def exact_mc_perm_test(xs, ys, nmc):
+    n, k = len(xs), 0
+    diff = np.abs(np.mean(xs) - np.mean(ys))
+    zs = np.concatenate([xs, ys])
+    for j in range(nmc):
+        np.random.shuffle(zs)
+        k += diff < np.abs(np.mean(zs[:n]) - np.mean(zs[n:]))
+    return k / nmc
