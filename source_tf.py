@@ -39,8 +39,8 @@ inverse_hyp = read_inverse_operator(inverse_fhyp)
 epochs_normal = mne.read_epochs(epochs_fnormal)
 epochs_hyp = mne.read_epochs(epochs_fhyp)
 
-epochs_normal = epochs_normal["press"]
-epochs_hyp = epochs_hyp["press"]
+epochs_normal = epochs_normal["Tone"]
+epochs_hyp = epochs_hyp["Tone"]
 
 labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
                                     regexp="Brodmann",
@@ -82,11 +82,11 @@ for j in range(len(fbands)):
                                                   n_jobs=1)]
 
     for stc in stcs_normal:
-        stc[band_name].crop(0, 0.5)
+        stc[band_name].crop(-0.5, 0)
 
     Pickle.dump(stcs_normal,
-                open("stcs_normal_press_source_induced" +
-                     "_%s_0-05.p" % band_name, "wb"))
+                open("stcs_normal_tone_source_induced" +
+                     "_%s_-05-0.p" % band_name, "wb"))
 
     stcs_hyp = []
     for j in range(len(epochs_hyp)):
@@ -102,10 +102,10 @@ for j in range(len(fbands)):
                                                n_jobs=1)]
 
     for stc in stcs_hyp:
-        stc[band_name].crop(0, 0.5)
+        stc[band_name].crop(-0.5, 0)
 
     Pickle.dump(stcs_hyp,
-                open("stcs_hyp_press_source_induced_%s_0-05.p"
+                open("stcs_hyp_tone_source_induced_%s_-05-.p"
                      % band_name, "wb"))
 
 

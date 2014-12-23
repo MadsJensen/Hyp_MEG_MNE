@@ -16,13 +16,12 @@ hostname = socket.gethostname()
 
 if hostname == "wintermute":
     data_path = "/home/mje/mnt/Hyp_meg/scratch/Tone_task_MNE/"
-    script_path = "/projects/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
-                  "scripts/MNE_analysis/"
+    script_path = "/home/mje/mnt/Hyp_meg/scripts/MNE_analysis/"
     subjects_dir = "/home/mje/mnt/Hyp_meg/scratch/fs_subjects_dir/"
     n_jobs = 3
 else:
     data_path = "/scratch1/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
-                "Tone_task_MNE/"
+                "Press_task_MNE/"
     script_path = "/projects/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
                   "scripts/MNE_analysis/"
     subjects_dir = "/scratch1/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
@@ -38,8 +37,8 @@ from permTest import permutation_resampling
 os.chdir(data_path)
 
 # Load files
-inverse_fnormal = data_path + "tone_task_normal-inv.fif"
-inverse_fhyp = data_path + "tone_task_hyp-inv.fif"
+inverse_fnormal = data_path + "Tone_task_normal-inv.fif"
+inverse_fhyp = data_path + "Tone_task_hyp-inv.fif"
 
 inverse_normal = read_inverse_operator(inverse_fnormal)
 inverse_hyp = read_inverse_operator(inverse_fhyp)
@@ -55,7 +54,7 @@ labels_name = []
 for label in labels:
     labels_name += [label.name]
 
-bands = ["beta", "gamma_low"]
+bands = ["theta", "alpha", "beta", "gamma_low", "gamma_high"]
 
 for band in bands:
     # load source power files
@@ -70,7 +69,7 @@ for band in bands:
                          "rb"))
 
     # Extract time
-    print "\n************* \nextracting TS\n ************"
+    print "\n************* \nextracting TS\n************"
     label_ts_normal = []
     for j in range(len(stcs_normal)):
         label_ts_normal += [extract_tc(stcs_normal[j][band],
@@ -120,7 +119,7 @@ for band in bands:
                                                     n_labels_normal])
 
     # calc MI for Hyp
-    print "\n************* \ncalculating MI for hyp\n************* "
+    print "\n************* \ncalculating MI for hyp\n*************"
     MI_hyp = np.empty([n_labels_hyp, n_labels_hyp, n_trials_hyp])
 
     for h in range(n_trials_hyp):
@@ -218,20 +217,20 @@ for band in bands:
 
     print "\nSignificient regions for Degrees:"
     for i in range(len(labels_name)):
-        if rejected[i]:
-            print labels_name[i], \
+        if rejected[i] and pvalList[i]["obsDiff"] != 0:
+            print "\n", labels_name[i], \
                 "pval:", pvals_corrected[i], \
                 "observed differnce:", pvalList[i]["obsDiff"], \
 
     results_degrees = []
     for i in range(len(labels_name)):
-        if rejected[i]:
+        if rejected[i] and pvalList[i]["obsDiff"] != 0:
             results_degrees += [{"label": labels_name[i],
                                 "pval_corr": pvals_corrected[i],
-                                "observed_differnce": pvalListCC[i]["obsDiff"],
-                                "mean random difference":
-                                np.asarray(pvalListCC[i]["diffs"]).mean()}]
-
+                                 "observed_differnce":
+                                 pvalListCC[i]["obsDiff"],
+                                 "mean random difference":
+                                 np.asarray(pvalListCC[i]["diffs"]).mean()}]
 
     # %% for Cluster coefficient (CC)
     pvalsCC = np.empty(len(pvalListCC))
@@ -242,19 +241,19 @@ for band in bands:
 
     print "\nSignificient regions for CC:"
     for i in range(len(labels_name)):
-        if rejectedCC[i]:
-            print labels_name[i], \
+        if rejectedCC[i] and pvalListCC[i]["obsDiff"] != 0:
+            print "\n", labels_name[i], \
                 "pval:", pvals_correctedCC[i], \
                 "observed differnce:", pvalListCC[i]["obsDiff"], \
 
     results_CC = []
     for i in range(len(labels_name)):
-        if rejectedCC[i]:
+        if rejectedCC[i] and pvalListCC[i]["obsDiff"] != 0:
             results_CC += [{"label": labels_name[i],
-                           "pval_corr:": pvals_correctedCC[i],
-                           "observed_differnce:": pvalListCC[i]["obsDiff"],
-                           "mean random difference:":
-                           np.asarray(pvalListCC[i]["diffs"]).mean()}]
+                            "pval_corr:": pvals_correctedCC[i],
+                            "observed_differnce:": pvalListCC[i]["obsDiff"],
+                            "mean random difference:":
+                            np.asarray(pvalListCC[i]["diffs"]).mean()}]
 
     results_all = [[results_degrees], [results_CC]]
     Pickle.dump(results_all,
