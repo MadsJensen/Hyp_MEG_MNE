@@ -1,49 +1,29 @@
 import numpy as np
-import networkx as nx
 import os
 import socket
 import mne
-
-from sklearn.metrics import mutual_info_score
-
-
-def calc_MI(x, y, bins):
-    c_xy = np.histogram2d(x, y, bins)[0]
-    mi = mutual_info_score(None, None, contingency=c_xy)
-    return mi /np.log(2)
-
-
-def FDbinSize(X):
-    """Calculates the Freedman-Diaconis bin size for
-    a data set for use in making a histogram
-
-    Arguments:
-    X:  1D Data set
-
-    Returns:
-    h:  F-D bin size
-    """
-    
-    # First Calculate the interquartile range
-    X = np.sort(X)
-    maxmin_range = X.max() - X.min()
-    IQR = np.subtract(*np.percentile(X, [75, 25]))
-
-    # Find the F-D bin size
-    h = np.ceil(maxmin_range / (2.*IQR/len(X)**(1./3.)))
-    return h
+import networkx as nx
+from mne.stats import bonferroni_correction, fdr_correction
 
 # Setup paths and prepare raw data
 hostname = socket.gethostname()
 
 if hostname == "wintermute":
     data_path = "/home/mje/mnt/Hyp_meg/scratch/Tone_task_MNE/"
+    script_path = "/home/mje/mnt/Hyp_meg/scripts/MNE_analysis/"
     subjects_dir = "/home/mje/mnt/Hyp_meg/scratch/fs_subjects_dir/"
 else:
     data_path = "/scratch1/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
                 "Tone_task_MNE/"
+    script_path = "/projects/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
+                  "scripts/MNE_analysis/"
     subjects_dir = "/scratch1/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
                    "fs_subjects_dir"
+
+# Import MI functions
+os.chdir(script_path)
+from MI_functions import calc_MI, FDbinSize
+from permTest import permutation_resampling
 
 # change dir to save files the rigth place
 os.chdir(data_path)
@@ -51,46 +31,58 @@ os.chdir(data_path)
 # load numpy files; crop
 epochs_fnormal = data_path + "tone_task_normal-epo.fif"
 epochs_normal = mne.read_epochs(epochs_fnormal)
+epochs_normal = epochs_normal["Tone"]
 
-# crop zscored TS
+# Get labels for FreeSurfer 'aparc' cortical parcellation with 34 labels/hemi
+labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+                                    regexp="Brodmann",
+                                    subjects_dir=subjects_dir)
+
+labels_name = []
+for label in labels:
+    labels_name += [label.name]
+
+## crop zscored TS
 fromTime = np.argmax(epochs_normal.times == -0.5)
-toTime = np.argmax(epochs_normal.times == -0.01)
+toTime = np.argmax(epochs_normal.times == 0)
 
 
-labelTsHypZscore = np.load("labelTsHypZscore.npy")
-labelTsNormalZscore = np.load("labelTsNormalZscore.npy")
+label_ts_hyp = np.load("labelTsHypTonePcaPercent.npy")
+label_ts_normal = np.load("labelTsNormalTonePcaPercent.npy")
 
-labelTsNormalZscoreCrop = labelTsNormalZscore[:, :, fromTime:toTime]
-labelTsHypZscoreCrop = labelTsHypZscore[:, :, fromTime:toTime]
+label_ts_normal_crop = label_ts_normal[:, :, fromTime:toTime]
+label_ts_hyp_crop = label_ts_hyp[:, :, fromTime:toTime]
 
 
-n_trials_normal = labelTsNormalZscoreCrop.shape[0]
-n_labels_normal = labelTsNormalZscoreCrop.shape[1]
-MI_results_normal = np.empty([n_labels_normal, n_labels_normal, n_trials_normal])
+n_trials_normal = 80  # label_ts_normal_crop.shape[0]
+n_labels_normal = 82  #label_ts_normal_crop.shape[1]
+MI_results_normal = np.empty([n_labels_normal, n_labels_normal,
+                              n_trials_normal])
 
-n_trials_hyp = labelTsHypZscoreCrop.shape[0]
-n_labels_hyp = labelTsHypZscoreCrop.shape[1]
+n_trials_hyp = 74  #label_ts_hyp_crop.shape[0]
+n_labels_hyp = 82  #label_ts_hyp_crop.shape[1]
 MI_results_hyp = np.empty([n_labels_hyp, n_labels_hyp, n_trials_hyp])
 
 # calculate the number of bins
 bins = np.empty(0)
-for t in range(n_trials_normal):
-    for l in range(n_labels_normal):
-        bins = np.append(bins, FDbinSize(labelTsNormalZscoreCrop[t, l, :]))
-for t in range(n_trials_hyp):
-    for l in range(n_labels_hyp):
-        bins = np.append(bins, FDbinSize(labelTsHypZscoreCrop[t, l, :]))
+for t in range(80):
+    for l in range(82):
+        bins = np.append(bins, FDbinSize(label_ts_normal[t][ l, :]))
+for t in range(74):
+    for l in range(82):
+        bins = np.append(bins, FDbinSize(label_ts_hyp[t][l, :]))
 
 bestBinsize = np.ceil(np.mean(bins))
 
 # calc MI for normal
 for h in range(n_trials_normal):
     counter = 0
+    print "Normal #: ", h
     tmpResult = np.empty([n_labels_normal * n_labels_normal])
     for j in range(n_labels_normal):
         for k in range(n_labels_normal):
-            tmpResult[counter] = (calc_MI(labelTsNormalZscoreCrop[h, j, :],
-                                          labelTsNormalZscoreCrop[h, k, :],
+            tmpResult[counter] = (calc_MI(label_ts_normal[h][j, :],
+                                          label_ts_normal[h][k, :],
                                           bestBinsize))
             counter += 1
     MI_results_normal[:, :, h] = np.reshape(tmpResult, [n_labels_normal,
@@ -99,13 +91,136 @@ for h in range(n_trials_normal):
 # calc MI for Hyp
 for h in range(n_trials_hyp):
     counter = 0
+    print "Hyp #: ", h
     tmpResult = np.empty([n_labels_hyp * n_labels_hyp])
     for j in range(n_labels_hyp):
         for k in range(n_labels_hyp):
-            tmpResult[counter] = (calc_MI(labelTsHypZscoreCrop[h, j, :],
-                                          labelTsHypZscoreCrop[h, k, :],
+            tmpResult[counter] = (calc_MI(label_ts_hyp[h][j, :],
+                                          label_ts_hyp[h][k, :],
                                           bestBinsize))
             counter += 1
     MI_results_hyp[:, :, h] = np.reshape(tmpResult, [n_labels_hyp,
-                                            n_labels_hyp])
+                                                     n_labels_hyp])
 
+# Convert to networkx classes
+fullMatrix = np.concatenate([MI_results_normal, MI_results_hyp], axis=2)
+
+threshold = np.median(fullMatrix[np.nonzero(fullMatrix)]) + \
+            (np.std(fullMatrix[np.nonzero(fullMatrix)]))
+
+binMatrixNormal = MI_results_normal > threshold
+binMatrixHyp = MI_results_hyp > threshold
+
+# %%
+print "\n************* \nMaking network classes\n*************"
+nxNormal = []
+for j in range(binMatrixNormal.shape[2]):
+    nxNormal += [nx.from_numpy_matrix(binMatrixNormal[:, :, j])]
+
+nxHyp = []
+for j in range(binMatrixHyp.shape[2]):
+    nxHyp += [nx.from_numpy_matrix(binMatrixHyp[:, :, j])]
+
+degreesNormal = []
+for j, trial in enumerate(nxNormal):
+    degreesNormal += [trial.degree()]
+
+degreesHyp = []
+for j, trial in enumerate(nxHyp):
+    degreesHyp += [trial.degree()]
+
+ccNormal = []
+for j, trial in enumerate(nxNormal):
+    ccNormal += [nx.cluster.clustering(trial)]
+ccHyp = []
+for j, trial in enumerate(nxHyp):
+    ccHyp += [nx.cluster.clustering(trial)]
+
+# %% Degress
+print "\n************* \nTesting degrees\n*************"
+pvalList = []
+for degreeNumber in range(binMatrixHyp.shape[0]):
+
+    postHyp = np.empty(len(degreesHyp))
+    for j in range(len(postHyp)):
+        postHyp[j] = degreesHyp[j][degreeNumber]
+
+    postNormal = np.empty(len(degreesNormal))
+    for j in range(len(postNormal)):
+        postNormal[j] = degreesNormal[j][degreeNumber]
+
+    pval, observed_diff, diffs = \
+        permutation_resampling(postHyp, postNormal,
+                               10000, np.mean)
+
+    pvalList += [{'pval': pval, "obsDiff": observed_diff, "diffs": diffs}]
+
+# %% for CC
+print "\n************* \nTesting cluster-coefficient\n*************"
+pvalListCC = []
+for ccNumber in range(binMatrixHyp.shape[0]):
+
+    postHyp = np.empty(len(ccHyp))
+    for j in range(len(ccHyp)):
+        postHyp[j] = ccHyp[j][ccNumber]
+
+    postNormal = np.empty(len(ccNormal))
+    for j in range(len(postNormal)):
+        postNormal[j] = ccNormal[j][ccNumber]
+
+    pval, observed_diff, diffs = \
+        permutation_resampling(postNormal, postHyp,
+                               10000, np.mean)
+
+    pvalListCC += [{'pval': pval, "obsDiff": observed_diff,
+                    "diffs": diffs}]
+
+# %% Correct for multiple comparisons
+
+pvals = np.empty(len(pvalList))
+for j in range(len(pvals)):
+    pvals[j] = pvalList[j]["pval"]
+
+rejected, pvals_corrected = bonferroni_correction(pvals)
+
+print "\nSignificient regions for Degrees:"
+for i in range(len(labels_name)):
+    if rejected[i] and pvalList[i]["obsDiff"] != 0:
+        print "\n", labels_name[i], \
+            "pval:", pvals_corrected[i], \
+            "observed differnce:", pvalList[i]["obsDiff"], \
+
+results_degrees = []
+for i in range(len(labels_name)):
+    if rejected[i] and pvalList[i]["obsDiff"] != 0:
+        results_degrees += [{"label": labels_name[i],
+                            "pval_corr": pvals_corrected[i],
+                             "obs_diff":
+                             pvalListCC[i]["obsDiff"],
+                             "mean_random_diff":
+                             np.asarray(pvalListCC[i]["diffs"]).mean()}]
+
+# %% for Cluster coefficient (CC)
+pvalsCC = np.empty(len(pvalListCC))
+for j in range(len(pvalsCC)):
+    pvalsCC[j] = pvalListCC[j]["pval"]
+
+rejectedCC, pvals_correctedCC = bonferroni_correction(pvalsCC)
+
+print "\nSignificient regions for CC:"
+for i in range(len(labels_name)):
+    if rejectedCC[i] and pvalListCC[i]["obsDiff"] != 0:
+        print "\n", labels_name[i], \
+            "pval:", pvals_correctedCC[i], \
+            "observed differnce:", pvalListCC[i]["obsDiff"]
+
+results_CC = []
+for i in range(len(labels_name)):
+    if rejectedCC[i] and pvalListCC[i]["obsDiff"] != 0:
+        results_CC += [{"label": labels_name[i],
+                        "pval_corr": pvals_correctedCC[i],
+                        "obs_diff": pvalListCC[i]["obsDiff"],
+                        "mean_random_diff:":
+                        np.asarray(pvalListCC[i]["diffs"]).mean()}]
+
+results_all = [[results_degrees], [results_CC]]
