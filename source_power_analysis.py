@@ -21,7 +21,7 @@ if hostname == "wintermute":
     n_jobs = 3
 else:
     data_path = "/scratch1/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
-                "Press_task_MNE/"
+                "Tone_task_MNE/"
     script_path = "/projects/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
                   "scripts/MNE_analysis/"
     subjects_dir = "/scratch1/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
@@ -37,8 +37,8 @@ from permTest import permutation_resampling
 os.chdir(data_path)
 
 # Load files
-inverse_fnormal = data_path + "Tone_task_normal-inv.fif"
-inverse_fhyp = data_path + "Tone_task_hyp-inv.fif"
+inverse_fnormal = data_path + "tone_task_normal-inv.fif"
+inverse_fhyp = data_path + "tone_task_hyp-inv.fif"
 
 inverse_normal = read_inverse_operator(inverse_fnormal)
 inverse_hyp = read_inverse_operator(inverse_fhyp)
@@ -55,17 +55,18 @@ for label in labels:
     labels_name += [label.name]
 
 bands = ["theta", "alpha", "beta", "gamma_low", "gamma_high"]
+bands = ["gamma_low"]
 
 for band in bands:
     # load source power files
     print "load normal"
     stcs_normal =\
-        Pickle.load(open("stcs_normal_press_source_induced_%s_0-05.p" % band,
+        Pickle.load(open("stcs_normal_tone_source_induced_%s_-05-0.p" % band,
                          "rb"))
 
     print "load hyp"
     stcs_hyp =\
-        Pickle.load(open("stcs_hyp_press_source_induced_%s_0-05.p" % band,
+        Pickle.load(open("stcs_hyp_tone_source_induced_%s_-05-0.p" % band,
                          "rb"))
 
     # Extract time
@@ -227,7 +228,7 @@ for band in bands:
         if rejected[i] and pvalList[i]["obsDiff"] != 0:
             results_degrees += [{"label": labels_name[i],
                                 "pval_corr": pvals_corrected[i],
-                                 "observed_differnce":
+                                 "obs_diff":
                                  pvalListCC[i]["obsDiff"],
                                  "mean random difference":
                                  np.asarray(pvalListCC[i]["diffs"]).mean()}]
@@ -244,17 +245,17 @@ for band in bands:
         if rejectedCC[i] and pvalListCC[i]["obsDiff"] != 0:
             print "\n", labels_name[i], \
                 "pval:", pvals_correctedCC[i], \
-                "observed differnce:", pvalListCC[i]["obsDiff"], \
+                "observed differnce:", pvalListCC[i]["obsDiff"]
 
     results_CC = []
     for i in range(len(labels_name)):
         if rejectedCC[i] and pvalListCC[i]["obsDiff"] != 0:
             results_CC += [{"label": labels_name[i],
                             "pval_corr:": pvals_correctedCC[i],
-                            "observed_differnce:": pvalListCC[i]["obsDiff"],
+                            "obs_diff:": pvalListCC[i]["obsDiff"],
                             "mean random difference:":
                             np.asarray(pvalListCC[i]["diffs"]).mean()}]
 
     results_all = [[results_degrees], [results_CC]]
     Pickle.dump(results_all,
-                open("power_press_MI_%s_0-05.p" % band, "wb"))
+                open("power_tone_MI_%s_0-05.p" % band, "wb"))

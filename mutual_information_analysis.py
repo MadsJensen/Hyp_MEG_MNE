@@ -31,7 +31,7 @@ os.chdir(data_path)
 # load numpy files; crop
 epochs_fnormal = data_path + "tone_task_normal-epo.fif"
 epochs_normal = mne.read_epochs(epochs_fnormal)
-epochs_normal = epochs_normal["Tone"]
+epochs_normal = epochs_normal["press"]
 
 # Get labels for FreeSurfer 'aparc' cortical parcellation with 34 labels/hemi
 labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
@@ -47,8 +47,8 @@ fromTime = np.argmax(epochs_normal.times == -0.5)
 toTime = np.argmax(epochs_normal.times == 0)
 
 
-label_ts_hyp = np.load("labelTsHypTonePcaPercent.npy")
-label_ts_normal = np.load("labelTsNormalTonePcaPercent.npy")
+label_ts_hyp = np.load("labelTsHypPressPcaPercent.npy")
+label_ts_normal = np.load("labelTsNormalPressPcaPercent.npy")
 
 label_ts_normal_crop = label_ts_normal[:, :, fromTime:toTime]
 label_ts_hyp_crop = label_ts_hyp[:, :, fromTime:toTime]
@@ -181,7 +181,7 @@ pvals = np.empty(len(pvalList))
 for j in range(len(pvals)):
     pvals[j] = pvalList[j]["pval"]
 
-rejected, pvals_corrected = bonferroni_correction(pvals)
+rejected, pvals_corrected = fdr_correction(pvals)
 
 print "\nSignificient regions for Degrees:"
 for i in range(len(labels_name)):
@@ -205,7 +205,7 @@ pvalsCC = np.empty(len(pvalListCC))
 for j in range(len(pvalsCC)):
     pvalsCC[j] = pvalListCC[j]["pval"]
 
-rejectedCC, pvals_correctedCC = bonferroni_correction(pvalsCC)
+rejectedCC, pvals_correctedCC = fdr_correction(pvalsCC)
 
 print "\nSignificient regions for CC:"
 for i in range(len(labels_name)):
@@ -223,4 +223,4 @@ for i in range(len(labels_name)):
                         "mean_random_diff:":
                         np.asarray(pvalListCC[i]["diffs"]).mean()}]
 
-results_all = [[results_degrees], [results_CC]]
+results_all = [results_degrees, results_CC]

@@ -1,6 +1,5 @@
 
 import numpy as np
-import numpy.random as npr
 import mne
 import os
 import socket
@@ -78,16 +77,16 @@ labelTsHyp = mne.extract_label_time_course(stcsHyp, labels, src_hyp,
                                            return_generator=False)
 
 # standardize TS's
-labelTsNormalZscore = []
+labelTsNormalPercent = []
 for j in range(len(labelTsNormal)):
-    labelTsNormalZscore += [rescale(labelTsNormal[j], epochs_normal.times,
-                                    baseline=(None, -0.7), mode="zscore")]
+    labelTsNormalPercent += [rescale(labelTsNormal[j], epochs_normal.times,
+                                     baseline=(None, -0.7), mode="percent")]
 
-labelTsHypZscore = []
+labelTsHypPercent = []
 for j in range(len(labelTsHyp)):
-    labelTsHypZscore += [rescale(labelTsHyp[j], epochs_hyp.times,
-                                 baseline=(None, -0.7), mode="zscore")]
+    labelTsHypPercent += [rescale(labelTsHyp[j], epochs_hyp.times,
+                                  baseline=(None, -0.7), mode="percent")]
 
 
-np.save("labelTsHypToneZscore.npy", labelTsHypZscore)
-np.save("labeltsnormalTonezscore", labelTsNormalZscore)
+np.save("labelTsHypToneMean-flipPercent.npy", labelTsHypPercent)
+np.save("labelTsNormalToneMean-flipPercent", labelTsNormalPercent)

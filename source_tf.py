@@ -1,4 +1,4 @@
-import cPickle as Pickle
+import cPickle as pickle
 import os
 import socket
 
@@ -84,7 +84,7 @@ for j in range(len(fbands)):
     for stc in stcs_normal:
         stc[band_name].crop(-0.5, 0)
 
-    Pickle.dump(stcs_normal,
+    pickle.dump(stcs_normal,
                 open("stcs_normal_tone_source_induced" +
                      "_%s_-05-0.p" % band_name, "wb"))
 
@@ -104,7 +104,7 @@ for j in range(len(fbands)):
     for stc in stcs_hyp:
         stc[band_name].crop(-0.5, 0)
 
-    Pickle.dump(stcs_hyp,
+    pickle.dump(stcs_hyp,
                 open("stcs_hyp_tone_source_induced_%s_-05-.p"
                      % band_name, "wb"))
 
