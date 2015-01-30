@@ -26,6 +26,7 @@ def permutation_resampling(case, control, num_samples, statistic):
             np.sum(diffs < -observed_diff))/float(num_samples)
     return pval, observed_diff, diffs
 
+
 def exact_mc_perm_test(xs, ys, nmc):
     n, k = len(xs), 0
     diff = np.abs(np.mean(xs) - np.mean(ys))
@@ -34,3 +35,21 @@ def exact_mc_perm_test(xs, ys, nmc):
         np.random.shuffle(zs)
         k += diff < np.abs(np.mean(zs[:n]) - np.mean(zs[n:]))
     return k / nmc
+
+
+def permutation_test(a, b, num_samples, statistic):
+    """Returns p-value that statistic for a is different
+    from statistc for b."""
+
+    observed_diff = abs(statistic(b) - statistic(a))
+    num_a = len(a)
+
+    combined = np.concatenate([a, b])
+    diffs = []
+    for i in range(num_samples):
+        xs = npr.permutation(combined)
+        diff = np.mean(xs[:num_a]) - np.mean(xs[num_a:])
+        diffs.append(diff)
+
+    pval = np.sum(np.abs(diffs) >= np.abs(observed_diff)) / float(num_samples)
+    return pval, observed_diff, diffs

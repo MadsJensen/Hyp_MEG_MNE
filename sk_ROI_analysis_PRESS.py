@@ -25,7 +25,7 @@ if hostname == "Wintermute":
     data_path = "/home/mje/mnt/Hyp_meg/scratch/Tone_task_MNE/"
     script_path = "/home/mje/mnt/Hyp_meg/scripts/MNE_analysis/"
     subjects_dir = "/home/mje/mnt/Hyp_meg/scratch/fs_subjects_dir/"
-    n_jobs = 3
+    n_jobs = 1
 else:
     data_path = "/scratch1/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
                 "Tone_task_MNE/"
@@ -33,7 +33,7 @@ else:
                   "scripts/MNE_analysis/"
     subjects_dir = "/scratch1/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
                    "fs_subjects_dir"
-    n_jobs = 6
+    n_jobs = 4
 
 
 # setup clf
@@ -142,17 +142,17 @@ for h, clf in enumerate(classifiers):
             labelTsNormalRescaled += [rescale(labelTsNormal[j],
                                               stcs_normal[0].times,
                                               baseline=(None, -0.7),
-                                              mode="percent")]
+                                              mode="zscore")]
 
         labelTsHypRescaled = []
         for j in range(len(labelTsHyp)):
             labelTsHypRescaled += [rescale(labelTsHyp[j],
                                            stcs_hyp[0].times,
                                            baseline=(None, -0.7),
-                                           mode="percent")]
+                                           mode="zscore")]
 
-        fromTime = np.argmax(stcs_normal[0].times == 0)
-        toTime = np.argmax(stcs_normal[0].times == 0.5)
+        fromTime = np.argmax(stcs_normal[0].times == -0.2)
+        toTime = np.argmax(stcs_normal[0].times == 0)
 
         labelTsNormalRescaledCrop = []
         for j in range(len(labelTsNormal)):
@@ -169,7 +169,7 @@ for h, clf in enumerate(classifiers):
         y = np.concatenate([np.zeros(len(labelTsNormalRescaledCrop)),
                             np.ones(len(labelTsHypRescaledCrop))])
 
-        X = preprocessing.scale(X)
+#        X = preprocessing.scale(X)
         cv = ShuffleSplit(len(X), n_splits, test_size=0.2)
         print "Working on: ", label.name
 
@@ -183,9 +183,9 @@ for h, clf in enumerate(classifiers):
         p_results[label.name] = pvalue
 
     outfile_p_name = "p_results_DKT_press_surf-normal_" +\
-        "MNE_percent_0-05_%s_std.csv" % clf_names[h]
+        "MNE_zscore_-02-0_%s_no-std.csv" % clf_names[h]
     outfile_score_name = "score_results_DKT_press_surf-normal_" +\
-        "MNE_percent_0-05_%s_std.csv" % clf_names[h]
+        "MNE_zscore_-02-0_%s_no-std.csv" % clf_names[h]
 
     with open(outfile_p_name, "w") as outfile:
         writer = csv.writer(outfile)

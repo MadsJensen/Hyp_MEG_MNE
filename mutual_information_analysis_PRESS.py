@@ -35,8 +35,11 @@ os.chdir(data_path)
 # epochs_normal = epochs_normal["press"]
 
 # Get labels for FreeSurfer 'aparc' cortical parcellation with 34 labels/hemi
-labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
-                                    regexp="Brodmann",
+# labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+#                                     regexp="Brodmann",
+#                                     subjects_dir=subjects_dir)
+
+labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
                                     subjects_dir=subjects_dir)
 
 labels_name = []
@@ -47,16 +50,16 @@ for label in labels:
 # fromTime = np.argmax(epochs_normal.times == -0.5)
 # toTime = np.argmax(epochs_normal.times == 0)
 
-label_ts_normal =\
-    np.load("labelTsNormalPressMean-flipZscore_resample_crop.npy")
 label_ts_hyp = np.load("labelTsHypPressMean-flipZscore_resample_crop.npy")
 
+label_ts_normal =\
+    np.load("labelTsNormalPressMean-flipZscore_resample_crop.npy")
 # label_ts_normal_crop = label_ts_normal[:, :, fromTime:toTime]
 # label_ts_hyp_crop = label_ts_hyp[:, :, fromTime:toTime]
 
 
 n_trials_normal = 80  # label_ts_normal_crop.shape[0]
-n_labels = 82  # label_ts_normal_crop.shape[1]
+n_labels = len(labels)  # label_ts_normal_crop.shape[1]
 MI_results_normal = np.empty([n_labels, n_labels,
                               n_trials_normal])
 
@@ -153,8 +156,13 @@ for degreeNumber in range(binMatrixHyp.shape[0]):
         permutation_resampling(postHyp, postNormal,
                                10000, np.mean)
 
-    pvalList += [{'pval': pval, "obsDiff": observed_diff, "diffs": diffs}]
+    pvalList  += [{'area': labels_name[degreeNumber],
+                   'pval': pval,
+                   "obsDiff": observed_diff,
+                   "diffs": diffs}]
 
+pickle.dump(pvalList,
+            open("MI_press_zscore_DKT_0-05_resample_crop_deg.p", "wb"))
 # %% for CC
 print "\n************* \nTesting cluster-coefficient\n*************"
 pvalListCC = []
@@ -172,57 +180,63 @@ for ccNumber in range(binMatrixHyp.shape[0]):
         permutation_resampling(postNormal, postHyp,
                                10000, np.mean)
 
-    pvalListCC += [{'pval': pval, "obsDiff": observed_diff,
-                    "diffs": diffs}]
+    pvalListCC  += [{'area': labels_name[degreeNumber],
+                      'pval': pval,
+                      "obsDiff": observed_diff,
+                      "diffs": diffs}]
+        
+pickle.dump(pvalListCC,
+            open("MI_press_zscore_DKT_0-05_resample_crop_CC.p", "wb"))
+    
 
-# %% Correct for multiple comparisons
+# # %% Correct for multiple comparisons
 
-pvals = np.empty(len(pvalList))
-for j in range(len(pvals)):
-    pvals[j] = pvalList[j]["pval"]
+# pvals = np.empty(len(pvalList))
+# for j in range(len(pvals)):
+#     pvals[j] = pvalList[j]["pval"]
 
-rejected, pvals_corrected = fdr_correction(pvals)
+# rejected, pvals_corrected = fdr_correction(pvals)
 
-print "\nSignificient regions for Degrees:"
-for i in range(len(labels_name)):
-    if rejected[i] and pvalList[i]["obsDiff"] != 0:
-        print "\n", labels_name[i], \
-            "pval:", pvals_corrected[i], \
-            "observed differnce:", pvalList[i]["obsDiff"], \
+# print "\nSignificient regions for Degrees:"
+# for i in range(len(labels_name)):
+#     if rejected[i] and pvalList[i]["obsDiff"] != 0:
+#         print "\n", labels_name[i], \
+#             "pval:", pvals_corrected[i], \
+#             "observed differnce:", pvalList[i]["obsDiff"], \
 
-results_degrees = []
-for i in range(len(labels_name)):
-    if rejected[i] and pvalList[i]["obsDiff"] != 0:
-        results_degrees += [{"label": labels_name[i],
-                            "pval_corr": pvals_corrected[i],
-                             "obs_diff":
-                             pvalListCC[i]["obsDiff"],
-                             "mean_random_diff":
-                             np.asarray(pvalListCC[i]["diffs"]).mean()}]
+# results_degrees = []
+# for i in range(len(labels_name)):
+#     if rejected[i] and pvalList[i]["obsDiff"] != 0:
+#         results_degrees += [{"label": labels_name[i],
+#                             "pval_corr": pvals_corrected[i],
+#                              "obs_diff":
+#                              pvalListCC[i]["obsDiff"],
+#                              "mean_random_diff":
+#                              np.asarray(pvalListCC[i]["diffs"]).mean()}]
 
-# %% for Cluster coefficient (CC)
-pvalsCC = np.empty(len(pvalListCC))
-for j in range(len(pvalsCC)):
-    pvalsCC[j] = pvalListCC[j]["pval"]
+# # %% for Cluster coefficient (CC)
+# pvalsCC = np.empty(len(pvalListCC))
+# for j in range(len(pvalsCC)):
+#     pvalsCC[j] = pvalListCC[j]["pval"]
 
-rejectedCC, pvals_correctedCC = fdr_correction(pvalsCC)
+# rejectedCC, pvals_correctedCC = fdr_correction(pvalsCC)
 
-print "\nSignificient regions for CC:"
-for i in range(len(labels_name)):
-    if rejectedCC[i] and pvalListCC[i]["obsDiff"] != 0:
-        print "\n", labels_name[i], \
-            "pval:", pvals_correctedCC[i], \
-            "observed differnce:", pvalListCC[i]["obsDiff"]
+# print "\nSignificient regions for CC:"
+# for i in range(len(labels_name)):
+#     if rejectedCC[i] and pvalListCC[i]["obsDiff"] != 0:
+#         print "\n", labels_name[i], \
+#             "pval:", pvals_correctedCC[i], \
+#             "observed differnce:", pvalListCC[i]["obsDiff"]
 
-results_CC = []
-for i in range(len(labels_name)):
-    if rejectedCC[i] and pvalListCC[i]["obsDiff"] != 0:
-        results_CC += [{"label": labels_name[i],
-                        "pval_corr": pvals_correctedCC[i],
-                        "obs_diff": pvalListCC[i]["obsDiff"],
-                        "mean_random_diff:":
-                        np.asarray(pvalListCC[i]["diffs"]).mean()}]
+# results_CC = []
+# for i in range(len(labels_name)):
+#     if rejectedCC[i] and pvalListCC[i]["obsDiff"] != 0:
+#         results_CC += [{"label": labels_name[i],
+#                         "pval_corr": pvals_correctedCC[i],
+#                         "obs_diff": pvalListCC[i]["obsDiff"],
+#                         "mean_random_diff:":
+#                         np.asarray(pvalListCC[i]["diffs"]).mean()}]
 
-results_all = [results_degrees, results_CC]
-pickle.dump(results_all,
-            open("MI_press_0-05_fdr_resample_crop_perm-resample.p", "wb"))
+# results_all = [results_degrees, results_CC]
+# pickle.dump(results_all,
+#             open("MI_press_0-05_fdr_resample_crop_perm-resample.p", "wb"))

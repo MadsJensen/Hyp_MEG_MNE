@@ -59,12 +59,15 @@ stcsHyp = apply_inverse_epochs(epochs_hyp, inverse_hyp, lambda2,
 
 
 # resample
-[stc.resample(300) for stc in stcsNormal]
-[stc.resample(300) for stc in stcsHyp]
+[stc.resample(250) for stc in stcsNormal]
+[stc.resample(250) for stc in stcsHyp]
 
 # Get labels from FreeSurfer cortical parcellation
-labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
-                                    regexp="Brodmann",
+# labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+#                                     regexp="Brodmann",
+#                                     subjects_dir=subjects_dir)
+
+labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
                                     subjects_dir=subjects_dir)
 
 # Average the source estimates within eachh label using sign-flips to reduce
@@ -103,7 +106,7 @@ labelTsHypRescaledCrop = []
 for j in range(len(labelTsHyp)):
     labelTsHypRescaledCrop += [labelTsHypRescaled[j][:, fromTime:toTime]]
 
-np.save("labelTsHypToneMean-flipZscore_resample_crop.npy",
+np.save("labelTsHypToneMean-flipZscore_resample_crop_DKT.npy",
         labelTsHypRescaledCrop)
-np.save("labelTsNormalToneMean-flipZscore_resample_crop.npy",
+np.save("labelTsNormalToneMean-flipZscore_resample_crop_DKT.npy",
         labelTsNormalRescaledCrop)

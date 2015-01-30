@@ -1,0 +1,25 @@
+import os
+import socket
+
+hostname = socket.gethostname()
+
+if hostname == "Wintermute":
+    path = "/home/mje/mnt/Hyp_meg/scripts/MNE_analysis"
+else:
+    path = "/scratch1/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
+                "scripts/MNE_analysis/"
+# change dir to save files the rigth place
+os.chdir(path)
+
+
+#os.chdir(path)
+#%run extract_ts_PRESS
+#
+#os.chdir(path)
+#%run extract_ts_TONE
+
+os.chdir(path)
+%run network_analysis
+
+os.chdir(path)
+%run network_analysis_TONE

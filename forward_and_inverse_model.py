@@ -14,7 +14,7 @@ from mne.minimum_norm import make_inverse_operator, write_inverse_operator
 # Setup paths and prepare raw data
 hostname = socket.gethostname()
 
-if hostname == "wintermute":
+if hostname == "Wintermute":
     data_path = "/home/mje/mnt/Hyp_meg/scratch/Tone_task_MNE"
     mri_path = '/home/mje/mnt/Hyp_meg/scratch/fs_subjects_dir/subject_1'
     subjects_dir = '/home/mje/mnt/Hyp_meg/scratch/fs_subjects_dir/'

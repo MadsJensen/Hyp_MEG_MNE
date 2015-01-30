@@ -1,4 +1,4 @@
-import numpy as np
+yimport numpy as np
 import networkx as nx
 import numpy.random as npr
 import os
@@ -6,28 +6,27 @@ import socket
 import mne
 import cPickle as pickle
 
-from nitime.analysis import CoherenceAnalyzer
+from nitime.analysis import MTCoherenceAnalyzer
 from nitime import TimeSeries
-from mne.stats import fdr_correction
+# from mne.stats import fdr_correction
 
 
 # %% Permutation test
-def permutation_resampling(case, control, num_samples, statistic):
-    """Returns p-value that statistic for case is different
-    from statistc for control."""
+def permutation_test(a, b, num_samples, statistic):
+    """Returns p-value that statistic for a is different
+    from statistc for b."""
 
-    observed_diff = abs(statistic(case) - statistic(control))
-    num_case = len(case)
+    observed_diff = abs(statistic(b) - statistic(a))
+    num_a = len(a)
 
-    combined = np.concatenate([case, control])
+    combined = np.concatenate([a, b])
     diffs = []
     for i in range(num_samples):
         xs = npr.permutation(combined)
-        diff = np.mean(xs[:num_case]) - np.mean(xs[num_case:])
+        diff = np.mean(xs[:num_a]) - np.mean(xs[num_a:])
         diffs.append(diff)
 
-    pval = (np.sum(diffs > observed_diff) +
-            np.sum(diffs < -observed_diff))/float(num_samples)
+    pval = np.sum(np.abs(diffs) >= np.abs(observed_diff)) / float(num_samples)
     return pval, observed_diff, diffs
 
 
@@ -49,27 +48,18 @@ os.chdir(data_path)
 
 # %%
 # load numpy files
-labelTsHypCrop = np.load("labelTsHypPressMean-flipZscore_resample_crop.npy")
+labelTsHypCrop = np.load("labelTsHypPressMean-flipZscore_resample_crop_DKT.npy")
 labelTsNormalCrop =\
-    np.load("labelTsNormalPressMean-flipZscore_resample_crop.npy")
-
-# crop zscored TS
-# fromTime = np.argmax(epochs_normal.times == 0)
-# toTime = np.argmax(epochs_normal.times == 0.5)
-
-# labelTsNormalCrop = []
-# for j in range(len(labelTsNormal)):
-#     labelTsNormalCrop += [labelTsNormal[j][:, fromTime:toTime]]
-
-# labelTsHypCrop = []
-# for j in range(len(labelTsHyp)):
-#     labelTsHypCrop += [labelTsHyp[j][:, fromTime:toTime]]
+    np.load("labelTsNormalPressMean-flipZscore_resample_crop_DKT.npy")
 
 
 # %%
 # Get labels for FreeSurfer 'aparc' cortical parcellation with 34 labels/hemi
-labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
-                                    regexp="Brodmann",
+# labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+#                                     regexp="Brodmann",
+#                                     subjects_dir=subjects_dir)
+
+labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
                                     subjects_dir=subjects_dir)
 
 labels_name = []
@@ -83,17 +73,17 @@ cohListHyp = []
 
 for j in range(len(labelTsNormalCrop)):
     nits = TimeSeries(labelTsNormalCrop[j],
-                      sampling_rate=300)  # epochs_normal.info["sfreq"])
+                      sampling_rate=250)  # epochs_normal.info["sfreq"])
     nits.metadata["roi"] = labels_name
 
-    cohListNormal += [CoherenceAnalyzer(nits)]
+    cohListNormal += [MTCoherenceAnalyzer(nits)]
 
 for j in range(len(labelTsHypCrop)):
     nits = TimeSeries(labelTsHypCrop[j],
-                      sampling_rate=300)  # epochs_normal.info["sfreq"])
+                      sampling_rate=250)  # epochs_normal.info["sfreq"])
     nits.metadata["roi"] = labels_name
 
-    cohListHyp += [CoherenceAnalyzer(nits)]
+    cohListHyp += [MTCoherenceAnalyzer(nits)]
 
 # Compute a source estimate per frequency band
 bands = dict(theta=[4, 8],
@@ -103,6 +93,8 @@ bands = dict(theta=[4, 8],
              gamma_high=[52, 90])
 
 
+bands = dict(theta=[4, 8])
+             
 for band in bands.keys():
     print "\n******************"
     print "\nAnalysing band: %s" % band
@@ -180,11 +172,16 @@ for band in bands.keys():
             postNormal[j] = degreesNormal[j][degreeNumber]
 
         pval, observed_diff, diffs = \
-            permutation_resampling(postHyp, postNormal,
-                                   10000, np.mean)
+            permutation_test(postHyp, postNormal, 10000, np.mean)
 
-        pvalList += [{'pval': pval, "obsDiff": observed_diff, "diffs": diffs}]
+        pvalList += [{'area': labels_name[degreeNumber],
+                      'pval': pval,
+                      "obsDiff": observed_diff,
+                      "diffs": diffs}]
 
+    pickle.dump(pvalList,
+                open("network_press_zscore_DKT_MTCOH_%s_0-05_resample_crop_deg.p" % band,
+                     "wb"))
     #  for CC
     pvalListCC = []
     for ccNumber in range(binMatrixHyp.shape[0]):
@@ -198,61 +195,13 @@ for band in bands.keys():
             postNormal[j] = ccNormal[j][ccNumber]
 
         pval, observed_diff, diffs = \
-            permutation_resampling(postHyp, postNormal,
-                                   10000, np.mean)
+            permutation_test(postHyp, postNormal, 10000, np.mean)
 
-        pvalListCC += [{'pval': pval, "obsDiff": observed_diff,
-                        "diffs": diffs}]
-
-    # %% Correct for multiple comparisons
-
-    pvals = np.empty(len(pvalList))
-    for j in range(len(pvals)):
-        pvals[j] = pvalList[j]["pval"]
-
-    rejected, pvals_corrected = fdr_correction(pvals)
-
-    print "\nSignificient regions for Degrees:"
-    for i in range(len(labels_name)):
-        if rejected[i] and pvalList[i]["obsDiff"] != 0:
-            print "\n", labels_name[i], \
-                "pval:", pvals_corrected[i], \
-                "observed differnce:", pvalList[i]["obsDiff"], \
-
-    results_degrees = []
-    for i in range(len(labels_name)):
-        if rejected[i] and pvalList[i]["obsDiff"] != 0:
-            results_degrees += [{"label": labels_name[i],
-                                "pval_corr": pvals_corrected[i],
-                                 "obs_diff":
-                                 pvalListCC[i]["obsDiff"],
-                                 "mean_random_diff":
-                                 np.asarray(pvalListCC[i]["diffs"]).mean()}]
-
-    # %% for Cluster coefficient (CC)
-    pvalsCC = np.empty(len(pvalListCC))
-    for j in range(len(pvalsCC)):
-        pvalsCC[j] = pvalListCC[j]["pval"]
-
-    rejectedCC, pvals_correctedCC = fdr_correction(pvalsCC)
-
-    print "\nSignificient regions for CC:"
-    for i in range(len(labels_name)):
-        if rejectedCC[i] and pvalListCC[i]["obsDiff"] != 0:
-            print "\n", labels_name[i], \
-                "pval:", pvals_correctedCC[i], \
-                "observed differnce:", pvalListCC[i]["obsDiff"]
-
-    results_CC = []
-    for i in range(len(labels_name)):
-        if rejectedCC[i] and pvalListCC[i]["obsDiff"] != 0:
-            results_CC += [{"label": labels_name[i],
-                            "pval_corr": pvals_correctedCC[i],
-                            "obs_diff": pvalListCC[i]["obsDiff"],
-                            "mean_random_diff:":
-                            np.asarray(pvalListCC[i]["diffs"]).mean()}]
-
-    results_all = [results_degrees, results_CC]
-    pickle.dump(results_all,
-                open("network_press_COH_%s_0-05_fdr_resample_crop.p" % band,
+        pvalListCC += [{'area': labels_name[degreeNumber],
+                      'pval': pval,
+                      "obsDiff": observed_diff,
+                      "diffs": diffs}]
+        
+    pickle.dump(pvalListCC,
+                open("network_press_zscore_DKT_MTCOH_%s_0-05_resample_crop_CC.p" % band,
                      "wb"))

@@ -42,8 +42,11 @@ epochs_hyp = mne.read_epochs(epochs_fhyp)
 epochs_normal = epochs_normal["Tone"]
 epochs_hyp = epochs_hyp["Tone"]
 
-labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
-                                    regexp="Brodmann",
+# labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+#                                     regexp="Brodmann",
+#                                     subjects_dir=subjects_dir)
+
+labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
                                     subjects_dir=subjects_dir)
 
 snr = 1.0  # Standard assumption for average data but using it for single trial
@@ -86,7 +89,7 @@ for j in range(len(fbands)):
 
     pickle.dump(stcs_normal,
                 open("stcs_normal_tone_source_induced" +
-                     "_%s_-05-0.p" % band_name, "wb"))
+                     "_%s_-05-0_DKT.p" % band_name, "wb"))
 
     stcs_hyp = []
     for j in range(len(epochs_hyp)):
@@ -105,5 +108,5 @@ for j in range(len(fbands)):
         stc[band_name].crop(-0.5, 0)
 
     pickle.dump(stcs_hyp,
-                open("stcs_hyp_tone_source_induced_%s_-05-.p"
+                open("stcs_hyp_tone_source_induced_%s_-05-0_DKT.p"
                      % band_name, "wb"))

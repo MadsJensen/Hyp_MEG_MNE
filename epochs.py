@@ -2,13 +2,12 @@ import mne
 import socket
 import numpy as np
 import os
-import matplotlib.pylab as plt
 
 # %%
 # Setup paths and prepare raw data
 hostname = socket.gethostname()
 
-if hostname == "wintermute":
+if hostname == "Wintermute":
     data_path = "/home/mje/mnt/Hyp_meg/scratch/Tone_task_MNE/"
     raw_fnormal = data_path + "tone_task-normal-tsss-mc-autobad-ica_raw.fif"
     raw_fhyp = data_path + "tone_task-hyp-tsss-mc-autobad-ica_raw.fif"
@@ -41,11 +40,11 @@ for condition in conditions:
 
     # Plot the events to get an idea of the paradigm
     # Specify colors and an event_id dictionary for the legend.
-    event_id = {'button': 1, 'Tone': 8}
+    event_ids = {'button': 1, 'Tone': 8}
     color = {1: 'blue', 8: 'red'}
 
-    mne.viz.plot_events(events, raw.info['sfreq'], raw.first_samp, color=color,
-                        event_id=event_id, show=False)
+    # mne.viz.plot_events(events, raw.info['sfreq'], raw.first_samp, color=color,
+    #                     event_id=event_id, show=False)
 
     for j in range(len(events)):
         if j == 0:
@@ -65,10 +64,10 @@ for condition in conditions:
         events_corr_time[k][0] = events_corr_time[k][0] / raw.info["sfreq"]
 
     # epochs settings
-    event_ids = {"Tone": 8}
+    # event_ids = {"Tone": 8}
     tmin, tmax = -1, 1
     picks = mne.pick_types(raw.info, meg=True, eeg=False, stim=True, eog=True,
-                           exclude='bads')
+                           emg=True, exclude='bads')
 
     epochs = mne.Epochs(raw, events_corrected, event_ids, tmin, tmax,
                         proj=False, picks=picks, baseline=(None, -0.7),
@@ -76,8 +75,7 @@ for condition in conditions:
 #    epochs.save("tone_task_%s-epo.fif" % (condition))
 #    evoked = epochs.average()
 #    evoked.save("tone_task_%s-ave.fif" % (condition))
-    exec("epochs_%s = epochs"  %(condition))
-
+    exec("epochs_%s = epochs" % (condition))
 
 
 # layout = mne.find_layout(epochs.info, 'meg')  # use full layout

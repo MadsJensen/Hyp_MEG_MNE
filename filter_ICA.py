@@ -16,7 +16,7 @@ from mne.preprocessing import ICA, create_ecg_epochs, create_eog_epochs
 # Setup paths and prepare raw data
 hostname = socket.gethostname()
 
-if hostname == "wintermute":
+if hostname == "Wintermute":
     data_path = "/home/mje/mnt/Hyp_meg/scratch/Tone_task_MNE/"
     raw_fnormal = "/home/mje/mnt/Hyp_meg/scratch/tone_task-tsss-mc-autobad.fif"
     raw_fhyp = "/home/mje/mnt/Hyp_meg/scratch/" + \

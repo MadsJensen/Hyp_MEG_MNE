@@ -6,7 +6,7 @@ import os
 
 # Setup paths and prepare raw data
 hostname = socket.gethostname()
-if hostname == "wintermute":
+if hostname == "Wintermute":
     data_path = "/home/mje/mnt/Hyp_meg/scratch/Tone_task_MNE"
     mri_path = '/home/mje/mnt/Hyp_meg/scratch/fs_subjects_dir/subject_1'
     subjects_dir = '/home/mje/mnt/Hyp_meg/scratch/fs_subjects_dir/'
@@ -31,7 +31,7 @@ os.chdir(data_path)
 
 condition = "normal"
 fname_evoked = data_path + 'tone_task_%s-ave.fif' % condition
-evoked = mne.read_evokeds(fname_evoked, condition=0,baseline=(None, -0.7))
+evoked = mne.read_evokeds(fname_evoked, condition=0, baseline=(None, -0.7))
 plot_trans(evoked.info, trans_fname=mri_normal, subject='subject_1',
            subjects_dir=subjects_dir)
 

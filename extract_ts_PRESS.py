@@ -45,8 +45,8 @@ inverse_hyp = read_inverse_operator(inverse_fhyp)
 epochs_normal = mne.read_epochs(epochs_fnormal)
 epochs_hyp = mne.read_epochs(epochs_fhyp)
 
-epochs_normal = epochs_normal["Tone"]
-epochs_hyp = epochs_hyp["Tone"]
+epochs_normal = epochs_normal["press"]
+epochs_hyp = epochs_hyp["press"]
 
 
 # %%
@@ -59,12 +59,15 @@ stcsHyp = apply_inverse_epochs(epochs_hyp, inverse_hyp, lambda2,
 
 
 # resample
-[stc.resample(300) for stc in stcsNormal]
-[stc.resample(300) for stc in stcsHyp]
+[stc.resample(250) for stc in stcsNormal]
+[stc.resample(250) for stc in stcsHyp]
 
 # Get labels from FreeSurfer cortical parcellation
-labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
-                                    regexp="Brodmann",
+# labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+#                                     regexp="Brodmann",
+#                                     subjects_dir=subjects_dir)
+
+labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
                                     subjects_dir=subjects_dir)
 
 # Average the source estimates within eachh label using sign-flips to reduce
@@ -92,8 +95,8 @@ for j in range(len(labelTsHyp)):
                                    baseline=(None, -0.7), mode="zscore")]
 
 
-fromTime = np.argmax(stcsNormal[0].times == -0.5)
-toTime = np.argmax(stcsNormal[0].times == 0)
+fromTime = np.argmax(stcsNormal[0].times == 0)
+toTime = np.argmax(stcsNormal[0].times == 0.5)
 
 labelTsNormalRescaledCrop = []
 for j in range(len(labelTsNormal)):
@@ -103,7 +106,7 @@ labelTsHypRescaledCrop = []
 for j in range(len(labelTsHyp)):
     labelTsHypRescaledCrop += [labelTsHypRescaled[j][:, fromTime:toTime]]
 
-np.save("labelTsHypToneMean-flipZscore_resample_crop.npy",
+np.save("labelTsHypPressMean-flipZscore_resample_crop_DKT.npy",
         labelTsHypRescaledCrop)
-np.save("labelTsNormalToneMean-flipZscore_resample_crop.npy",
+np.save("labelTsNormalPressMean-flipZscore_resample_crop_DKT.npy",
         labelTsNormalRescaledCrop)

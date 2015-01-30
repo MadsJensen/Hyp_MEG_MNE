@@ -1,0 +1,9 @@
+import os
+path = "/projects/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
+       "scripts/MNE_analysis/"
+#
+os.chdir(path)
+%run sk_ROI_analysis_PRESS
+
+os.chdir(path)
+%run  sk_ROI_analysis_TONE

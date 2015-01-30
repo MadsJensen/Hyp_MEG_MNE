@@ -7,7 +7,7 @@ from mne.minimum_norm import (read_inverse_operator, point_spread_function,
 
 hostname = socket.gethostname()
 
-if hostname == "wintermute":
+if hostname == "Wintermute":
     data_path = "/home/mje/mnt/Hyp_meg/scratch/Tone_task_MNE/"
     subjects_dir = "/home/mje/mnt/Hyp_meg/scratch/fs_subjects_dir/"
 else:
@@ -58,6 +58,8 @@ labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
                                     regexp="pariet",
                                     subjects_dir=subjects_dir)
 
+# labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
+#                                     subjects_dir=subjects_dir)
 
 # regularisation parameter
 snr = 3.0
@@ -66,9 +68,11 @@ method = 'MNE'  # can be 'MNE' or 'sLORETA'
 mode = 'svd'
 n_svd_comp = 1
 
+label = labels[6]
+
 stc_psf_meg, _ = point_spread_function(inverse_operator_meg,
                                        forward, method=method,
-                                       labels=labels,
+                                       labels=[label],
                                        lambda2=lambda2,
                                        pick_ori='normal',
                                        mode=mode,
@@ -79,7 +83,7 @@ stc_psf_meg, _ = point_spread_function(inverse_operator_meg,
 # stc_psf_eegmeg.save('psf_eegmeg')
 # stc_psf_meg.save('psf_meg')
 
-from mayavi import mlab
+# from mayavi import mlab
 fmin = 0.
 time_label = "MEG %d"
 fmax = stc_psf_meg.data[:, 0].max()
@@ -90,7 +94,7 @@ brain_meg = stc_psf_meg.plot(surface='inflated', hemi='both',
                              fmid=fmid, fmax=fmax,
                              figure=mlab.figure(size=(500, 500)))
 
-brain_meg.add_label(labels[0], hemi="lh", borders=True)
+brain_meg.add_label(label, hemi="lh", borders=True)
 brain_meg.add_label(labels[1], hemi="rh", borders=True)
 
 # The PSF is centred around the right auditory cortex label,
@@ -106,18 +110,19 @@ brain_meg.add_label(labels[1], hemi="rh", borders=True)
 
 # %% CROSS-TALK FUNCTION
 # regularisation parameter
-snr = 3.0
+snr = 1.0
 lambda2 = 1.0 / snr ** 2
 mode = 'svd'
 n_svd_comp = 1
 
 method = 'MNE'  # can be 'MNE', 'dSPM', or 'sLORETA'
-stc_ctf_mne = cross_talk_function(inverse_operator_meg, forward, labels[0:1],
+stc_ctf_mne = cross_talk_function(inverse_operator_meg, forward,
+                                  [label],
                                   method=method, lambda2=lambda2,
                                   signed=False, mode=mode,
                                   n_svd_comp=n_svd_comp)
 
-from mayavi import mlab
+# from mayavi import mlab
 fmin = 0.
 time_label = "MNE %d"
 fmax = stc_ctf_mne.data[:, 0].max()
@@ -128,8 +133,7 @@ brain_mne = stc_ctf_mne.plot(surface='inflated', hemi='both',
                              fmid=fmid, fmax=fmax,
                              figure=mlab.figure(size=(500, 500)))
 
-brain_meg.add_label(labels[0], hemi="lh", borders=True)
-brain_meg.add_label(labels[1], hemi="rh", borders=True)
+brain_mne.add_label(label, hemi="lh", borders=True)
 # Cross-talk functions for MNE and dSPM (and sLORETA) have the same shapes
 # (they may still differ in overall amplitude).
 # Point-spread functions (PSfs) usually differ significantly.
