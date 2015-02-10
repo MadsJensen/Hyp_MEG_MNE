@@ -198,13 +198,13 @@ def plot_TS_from_ROI(TS_1, TS_2, name, times, y_label="MI value", show=True):
 
 # %% load Class csv file
 classf_press = pd.read_csv(
-    "p_results_DKT_press_surf-normal_MNE_zscore_-02-0_LR_no-std.csv",
+    "p_results_DKT_press_surf-normal_MNE_zscore_0-05_LR_no-std.csv",
     header=None)
 classf_press.columns = ["area", "pval"]  # rename columns
 classf_press = classf_press.sort("area")
 
 res_score = pd.read_csv(
-    "score_results_DKT_press_surf-normal_MNE_zscore_-02-0_LR_no-std.csv",
+    "score_results_DKT_press_surf-normal_MNE_zscore_0-05_LR_no-std.csv",
     header=None)
 
 classf_press["score"] = res_score[1]
@@ -236,3 +236,138 @@ classf_tone["rejected"], classf_tone["pval_corr"] =\
 classf_tone.index = range(0, len(classf_tone))
 
 print classf_tone[classf_tone["rejected"]  == True]
+
+
+# %% network connect
+
+bands = ["theta", "alpha", "beta", "gamma_low", "gamma_high"]
+tmp_list = []
+for band in bands:
+    tmp = pickle.load(
+    open("network_connect_press_zscore_DKT_%s_0-05_resample_crop_CC.p" % band,
+         "rb"))
+    tmp.pop("diffs")
+    tmp["band"] = band
+    tmp_list += [tmp]
+    
+results_cc_press = pd.DataFrame.from_dict(tmp_list)
+results_cc_press["rejected"], results_cc_press["pval_corr"] = \
+    fdr_correction(results_cc_press["pval"])
+
+tmp_list = []
+for band in bands:
+    tmp = pickle.load(
+    open("network_connect_press_zscore_DKT_%s_0-05_resample_crop_deg.p" % band,
+         "rb"))
+    tmp.pop("diffs")
+    tmp["band"] = band
+    tmp_list += [tmp]
+    
+results_deg_press = pd.DataFrame.from_dict(tmp_list)
+results_deg_press["rejected"], results_deg_press["pval_corr"] = \
+    fdr_correction(results_deg_press["pval"])
+
+# tone
+tmp_list = []
+for band in bands:
+    tmp = pickle.load(
+    open("network_connect_tone_zscore_DKT_%s_-05-0_resample_crop_CC.p" % band,
+         "rb"))
+    tmp.pop("diffs")
+    tmp["band"] = band
+    tmp_list += [tmp]
+    
+results_cc_tone = pd.DataFrame.from_dict(tmp_list)
+results_cc_tone["rejected"], results_cc_tone["pval_corr"] = \
+    fdr_correction(results_cc_tone["pval"])
+
+tmp_list = []
+for band in bands:
+    tmp = pickle.load(
+    open("network_connect_tone_zscore_DKT_%s_-05-0_resample_crop_deg.p" % band,
+         "rb"))
+    tmp.pop("diffs")
+    tmp["band"] = band
+    tmp_list += [tmp]
+    
+results_deg_tone = pd.DataFrame.from_dict(tmp_list)
+results_deg_tone["rejected"], results_deg_tone["pval_corr"] = \
+    fdr_correction(results_deg_tone["pval"])
+
+tmp_list = []
+for band in bands:
+    tmp = pickle.load(
+    open("network_connect_tone_zscore_DKT_%s_-05-0_resample_crop_trans.p"
+        % band,"rb"))
+    tmp.pop("diffs")
+    tmp["band"] = band
+    tmp_list += [tmp]
+    
+results_trans_tone = pd.DataFrame.from_dict(tmp_list)
+results_trans_tone["rejected"], results_trans_tone["pval_corr"] = \
+    fdr_correction(results_trans_tone["pval"])
+
+tmp_list = []
+for band in bands:
+    tmp = pickle.load(
+    open("network_connect_press_zscore_DKT_%s_0-05_resample_crop_trans.p"
+        % band, "rb"))
+    tmp.pop("diffs")
+    tmp["band"] = band
+    tmp_list += [tmp]
+    
+results_trans_press = pd.DataFrame.from_dict(tmp_list)
+results_trans_press["rejected"], results_trans_press["pval_corr"] = \
+    fdr_correction(results_trans_press["pval"])
+
+
+# %% correlation
+# tone
+tmp_list = []
+tmp = pickle.load(
+open("network_connect_tone_zscore_DKT_corr_-05-0_resample_crop_trans.p", "rb"))
+tmp.pop("diffs")
+tmp_list += [tmp]
+
+results_trans_tone_corr = pd.DataFrame.from_dict(tmp_list)
+results_trans_tone_corr["rejected"], results_trans_tone_corr["pval_corr"] = \
+    fdr_correction(results_trans_tone_corr["pval"])
+    
+tmp_list = []
+tmp = pickle.load(
+open("network_connect_press_zscore_DKT_corr_0-05_resample_crop_trans.p", "rb"))
+tmp.pop("diffs")
+tmp_list += [tmp]
+
+results_trans_press_corr = pd.DataFrame.from_dict(tmp_list)
+results_trans_press_corr["rejected"], results_trans_press_corr["pval_corr"] = \
+    fdr_correction(results_trans_press_corr["pval"])
+
+
+tmp_list = []
+tmp = pickle.load(
+open("network_connect_press_zscore_DKT_corr_0-05_resample_crop_deg.p", "rb"))
+tmp.pop("diffs")
+tmp_list += [tmp]
+
+results_deg_press_corr = pd.DataFrame.from_dict(tmp_list)
+results_deg_press_corr ["rejected"], results_deg_press_corr ["pval_corr"] = \
+    fdr_correction(results_deg_press_corr ["pval"])
+    
+tmp_list = []
+tmp = pickle.load(
+open("network_connect_tone_zscore_DKT_corr_-05-0_resample_crop_deg.p", "rb"))
+tmp.pop("diffs")
+tmp_list += [tmp]
+
+results_deg_tone_corr = pd.DataFrame.from_dict(tmp_list)
+results_deg_tone_corr ["rejected"], results_deg_tone_corr ["pval_corr"] = \
+    fdr_correction(results_deg_tone_corr ["pval"])
+    
+print "Tone, deg\n", results_deg_tone_corr
+print "Press, deg\n", results_deg_press_corr
+print "Tone, transitivity\n", results_trans_tone_corr
+print "Press, transitivity\n", results_trans_press_corr
+
+
+

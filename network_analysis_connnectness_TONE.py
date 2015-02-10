@@ -73,8 +73,8 @@ inverse_hyp = read_inverse_operator(inverse_fhyp)
 epochs_normal = mne.read_epochs(epochs_fnormal)
 epochs_hyp = mne.read_epochs(epochs_fhyp)
 
-epochs_normal = epochs_normal["press"]
-epochs_hyp = epochs_hyp["press"]
+epochs_normal = epochs_normal["Tone"]
+epochs_hyp = epochs_hyp["Tone"]
 
 
 # %%
@@ -92,8 +92,8 @@ stcsHyp = apply_inverse_epochs(epochs_hyp, inverse_hyp, lambda2,
 
 # Get labels from FreeSurfer cortical parcellation
 labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
-                                    regexp="[G|S]",
-                                    subjects_dir=subjects_dir)
+                                   regexp="[G|S]",
+                                   subjects_dir=subjects_dir)
 
 labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
                                     subjects_dir=subjects_dir)
@@ -124,8 +124,8 @@ for j in range(len(labelTsHyp)):
                                    baseline=(None, -0.7), mode="zscore")]
 
 
-fromTime = np.argmax(stcsNormal[0].times == 0)
-toTime = np.argmax(stcsNormal[0].times == 0.5)
+fromTime = np.argmax(stcsNormal[0].times == -0.5)
+toTime = np.argmax(stcsNormal[0].times == 0)
 
 labelTsNormalRescaledCrop = []
 for j in range(len(labelTsNormal)):
@@ -180,7 +180,7 @@ for band in bands.keys():
                              len(labels_name),
                              len(labelTsHypRescaledCrop)])
 
-    # confine analysis to specific band
+    # confine analysis to Aplha (8  12 Hz)
     freq_idx = np.where((cohListHyp[0].frequencies >= f_lw) *
                         (cohListHyp[0].frequencies <= f_up))[0]
 
@@ -239,19 +239,24 @@ for band in bands.keys():
     trans_normal = np.asarray([nx.cluster.transitivity(g)
                             for g in nxNormal])
     
-    np.savetxt("network_connect_res/deg_press_normal_%s.csv"
+    np.savetxt("network_connect_res/deg_tone_normal_%s.csv"
         % band, deg_normal)
-    np.savetxt("network_connect_res/deg_press_hyp_%s.csv"
+    np.savetxt("network_connect_res/deg_tone_hyp_%s.csv"
         % band, deg_hyp)        
+
+    np.savetxt("network_connect_res/cc_tone_normal_%s.csv"
+        % band, cc_normal)
+    np.savetxt("network_connect_res/cc_tone_hyp_%s.csv"
+        % band, cc_hyp)  
     
-    np.savetxt("network_connect_res/trans_press_normal_%s.csv"
+    np.savetxt("network_connect_res/trans_tone_normal_%s.csv"
         % band, trans_normal)
-    np.savetxt("network_connect_res/trans_press_hyp_%s.csv"
+    np.savetxt("network_connect_res/trans_tone_hyp_%s.csv"
         % band, trans_hyp)   
         
-    np.savetxt("network_connect_res/eff_press_normal_%s.csv"
+    np.savetxt("network_connect_res/eff_tone_normal_%s.csv"
         % band, eff_normal)
-    np.savetxt("network_connect_res/eff_press_hyp_%s.csv"
+    np.savetxt("network_connect_res/eff_tone_hyp_%s.csv"
         % band, eff_hyp)   
 
 #
@@ -265,7 +270,7 @@ for band in bands.keys():
 #    
 #    pickle.dump(results_cc,
 #            open(result_dir + \
-#            "/network_connect_press_zscore_DKT_%s_0-05_resample_crop_CC.p"
+#            "/network_connect_tone_zscore_DKT_%s_0-05_resample_crop_CC.p"
 #                 % band, "wb"))
 #
 #    pval, obs_diff, diffs =\
@@ -277,7 +282,7 @@ for band in bands.keys():
 #    
 #    pickle.dump(results_deg,
 #            open(result_dir + \
-#            "/network_connect_press_zscore_DKT_%s_0-05_resample_crop_deg.p"
+#            "/network_connect_tone_zscore_DKT_%s_0-05_resample_crop_deg.p"
 #                 % band, "wb"))
 #
 #    pval, obs_diff, diffs =\
@@ -289,5 +294,5 @@ for band in bands.keys():
 #    
 #    pickle.dump(results_trans,
 #            open(result_dir + \
-#            "/network_connect_press_zscore_DKT_%s_0-05_resample_crop_trans.p"
+#            "/network_connect_tone_zscore_DKT_%s_0-05_resample_crop_trans.p"
 #                 % band, "wb"))

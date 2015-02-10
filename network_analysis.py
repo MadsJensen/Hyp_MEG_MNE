@@ -1,4 +1,4 @@
-yimport numpy as np
+import numpy as np
 import networkx as nx
 import numpy.random as npr
 import os
