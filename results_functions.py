@@ -31,12 +31,12 @@ else:
 os.chdir(data_path)
 
 # Get labels for FreeSurfer 'aparc' cortical parcellation with 34 labels/hemi
-# labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
-#                                    regexp="Brodmann",
-#                                    subjects_dir=subjects_dir)
-
-labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
+labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+                                    regexp="Brodmann",
                                     subjects_dir=subjects_dir)
+
+# labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
+#                                    subjects_dir=subjects_dir)
 
 # %%
 # bands = ["theta", "alpha", "beta", "gamma_low", "gamma_high"]
@@ -198,13 +198,13 @@ def plot_TS_from_ROI(TS_1, TS_2, name, times, y_label="MI value", show=True):
 
 # %% load Class csv file
 classf_press = pd.read_csv(
-    "p_results_DKT_press_surf-normal_MNE_zscore_0-05_LR_no-std.csv",
+    "p_results_BA_press_surf-normal_MNE_zscore_-02-0_LR_no-std.csv",
     header=None)
 classf_press.columns = ["area", "pval"]  # rename columns
 classf_press = classf_press.sort("area")
 
 res_score = pd.read_csv(
-    "score_results_DKT_press_surf-normal_MNE_zscore_0-05_LR_no-std.csv",
+    "score_results_BA_press_surf-normal_MNE_zscore_-02-0_LR_no-std.csv",
     header=None)
 
 classf_press["score"] = res_score[1]
@@ -219,13 +219,13 @@ classf_press["rejected"], classf_press["pval_corr"] =\
 print classf_press[classf_press["rejected"]  == True]
 
 classf_tone = pd.read_csv(
-    "p_results_DKT_tone_surf-normal_MNE_zscore_-05-0_LR_no-std.csv",
+    "p_results_BA_tone_surf-normal_MNE_zscore_-05-0_LR_no-std.csv",
     header=None)
 classf_tone.columns = ["area", "pval"]  # rename columns
 classf_tone = classf_tone.sort("area")
 
 res_score = pd.read_csv(
-    "score_results_DKT_tone_surf-normal_MNE_zscore_-05-0_LR_no-std.csv",
+    "score_results_BA_tone_surf-normal_MNE_zscore_-05-0_LR_no-std.csv",
     header=None)
 
 classf_tone["score"] = res_score[1]

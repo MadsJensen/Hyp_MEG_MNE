@@ -34,7 +34,7 @@ def permutation_test(a, b, num_samples, statistic):
     return pval, observed_diff, diffs
 
 
-# Setup paths and prepare raw data
+# %%Setup paths and prepare raw data
 hostname = socket.gethostname()
 if hostname == "Wintermute":
     data_path = "/home/mje/mnt/Hyp_meg/scratch/Tone_task_MNE/"
@@ -197,6 +197,7 @@ nxHyp = []
 for j in range(binMatrixHyp.shape[2]):
     nxHyp += [nx.from_numpy_matrix(binMatrixHyp[:, :, j])]
 
+#%%
 # eff_normal = np.empty(binMatrixNormal.shape[2])
 # for j, graph in enumerate(nxNormal):
 #     eff_normal[j] = bct.efficiency_bin(nx.to_numpy_matrix(graph))

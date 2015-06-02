@@ -91,11 +91,15 @@ stcsHyp = apply_inverse_epochs(epochs_hyp, inverse_hyp, lambda2,
 [stc.resample(250) for stc in stcsHyp]
 
 # Get labels from FreeSurfer cortical parcellation
-labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
-                                   regexp="[G|S]",
-                                   subjects_dir=subjects_dir)
+# labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
+#                                     regexp="[G|S]",
+#                                     subjects_dir=subjects_dir)
 
-labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
+# labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
+#                                     subjects_dir=subjects_dir)
+
+labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+                                    regexp="Bro",
                                     subjects_dir=subjects_dir)
 labels_name = [label.name for label in labels]
 
@@ -227,47 +231,46 @@ for band in bands.keys():
     cc_normal = np.asarray([np.mean(nx.cluster.clustering(g).values())
                             for g in nxNormal])
 
-    deg_hyp= np.asarray([np.mean(g.degree().values())
-                            for g in nxHyp])
-                                
+    deg_hyp = np.asarray([np.mean(g.degree().values())
+                         for g in nxHyp])
+
     deg_normal = np.asarray([np.mean(g.degree().values())
                             for g in nxNormal])
-    
-    trans_hyp= np.asarray([nx.cluster.transitivity(g)
-                            for g in nxHyp])
-                                
-    trans_normal = np.asarray([nx.cluster.transitivity(g)
-                            for g in nxNormal])
-    
-    np.savetxt("network_connect_res/deg_tone_normal_%s.csv"
-        % band, deg_normal)
-    np.savetxt("network_connect_res/deg_tone_hyp_%s.csv"
-        % band, deg_hyp)        
 
-    np.savetxt("network_connect_res/cc_tone_normal_%s.csv"
-        % band, cc_normal)
-    np.savetxt("network_connect_res/cc_tone_hyp_%s.csv"
-        % band, cc_hyp)  
-    
-    np.savetxt("network_connect_res/trans_tone_normal_%s.csv"
-        % band, trans_normal)
-    np.savetxt("network_connect_res/trans_tone_hyp_%s.csv"
-        % band, trans_hyp)   
-        
-    np.savetxt("network_connect_res/eff_tone_normal_%s.csv"
-        % band, eff_normal)
-    np.savetxt("network_connect_res/eff_tone_hyp_%s.csv"
-        % band, eff_hyp)   
+    trans_hyp = np.asarray([nx.cluster.transitivity(g)
+                           for g in nxHyp])
+
+    trans_normal = np.asarray([nx.cluster.transitivity(g)
+                               for g in nxNormal])
+
+    np.savetxt("network_connect_res/deg_tone_normal_BA_%s.csv"
+               % band, deg_normal)
+    np.savetxt("network_connect_res/deg_tone_hyp_BA_%s.csv"
+               % band, deg_hyp)
+
+    np.savetxt("network_connect_res/cc_tone_normal_BA_%s.csv"
+               % band, cc_normal)
+    np.savetxt("network_connect_res/cc_tone_hyp_BA_%s.csv"
+               % band, cc_hyp)
+
+    np.savetxt("network_connect_res/trans_tone_normal_BA_%s.csv"
+               % band, trans_normal)
+    np.savetxt("network_connect_res/trans_tone_hyp_BA_%s.csv"
+               % band, trans_hyp)
+
+    np.savetxt("network_connect_res/eff_tone_normal_BA_%s.csv"
+               % band, eff_normal)
+    np.savetxt("network_connect_res/eff_tone_hyp_BA_%s.csv"
+               % band, eff_hyp)
 
 #
-#    
 #    pval, obs_diff, diffs =\
 #        permutation_test(cc_normal, cc_hyp, 10000, np.mean)
 #    print band, pval, obs_diff, np.mean(diffs)
 #
-#    results_cc = {"pval": pval, "obs_diff": obs_diff, "diffs": diffs, 
+#    results_cc = {"pval": pval, "obs_diff": obs_diff, "diffs": diffs,
 #               "real_diff": np.mean(cc_normal.mean() - cc_hyp.mean())}
-#    
+#
 #    pickle.dump(results_cc,
 #            open(result_dir + \
 #            "/network_connect_tone_zscore_DKT_%s_0-05_resample_crop_CC.p"
@@ -277,9 +280,9 @@ for band in bands.keys():
 #        permutation_test(deg_normal, deg_hyp, 10000, np.mean)
 #    print band, pval, obs_diff, np.mean(diffs)
 #
-#    results_deg = {"pval": pval, "obs_diff": obs_diff, "diffs": diffs, 
+#    results_deg = {"pval": pval, "obs_diff": obs_diff, "diffs": diffs,
 #               "real_diff": np.mean(deg_normal.mean() - deg_hyp.mean())}
-#    
+#
 #    pickle.dump(results_deg,
 #            open(result_dir + \
 #            "/network_connect_tone_zscore_DKT_%s_0-05_resample_crop_deg.p"
@@ -289,9 +292,9 @@ for band in bands.keys():
 #        permutation_test(trans_normal, trans_hyp, 10000, np.mean)
 #    print band, pval, obs_diff, np.mean(diffs)
 #
-#    results_trans = {"pval": pval, "obs_diff": obs_diff, "diffs": diffs, 
+#    results_trans = {"pval": pval, "obs_diff": obs_diff, "diffs": diffs,
 #               "real_diff": np.mean(trans_normal.mean() - trans_hyp.mean())}
-#    
+#
 #    pickle.dump(results_trans,
 #            open(result_dir + \
 #            "/network_connect_tone_zscore_DKT_%s_0-05_resample_crop_trans.p"

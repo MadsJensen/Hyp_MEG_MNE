@@ -3,7 +3,7 @@ import os
 import socket
 from mne.minimum_norm import (read_inverse_operator, point_spread_function,
                               cross_talk_function)
-
+from mayavi import mlab
 
 hostname = socket.gethostname()
 
@@ -54,12 +54,13 @@ forward = mne.read_forward_solution(fname_fwd, force_fixed=True,
 inverse_operator_meg = read_inverse_operator(inverse_fnormal)
 
 # read label(s)
-labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
-                                    regexp="pariet",
+# labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
+#                                     regexp="pariet",
+#                                     subjects_dir=subjects_dir)
+
+labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
                                     subjects_dir=subjects_dir)
 
-# labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
-#                                     subjects_dir=subjects_dir)
 
 # regularisation parameter
 snr = 3.0
@@ -68,7 +69,7 @@ method = 'MNE'  # can be 'MNE' or 'sLORETA'
 mode = 'svd'
 n_svd_comp = 1
 
-label = labels[6]
+label = labels[30]
 
 stc_psf_meg, _ = point_spread_function(inverse_operator_meg,
                                        forward, method=method,
@@ -83,7 +84,6 @@ stc_psf_meg, _ = point_spread_function(inverse_operator_meg,
 # stc_psf_eegmeg.save('psf_eegmeg')
 # stc_psf_meg.save('psf_meg')
 
-# from mayavi import mlab
 fmin = 0.
 time_label = "MEG %d"
 fmax = stc_psf_meg.data[:, 0].max()
@@ -110,7 +110,7 @@ brain_meg.add_label(labels[1], hemi="rh", borders=True)
 
 # %% CROSS-TALK FUNCTION
 # regularisation parameter
-snr = 1.0
+snr = 3.0
 lambda2 = 1.0 / snr ** 2
 mode = 'svd'
 n_svd_comp = 1
@@ -134,6 +134,7 @@ brain_mne = stc_ctf_mne.plot(surface='inflated', hemi='both',
                              figure=mlab.figure(size=(500, 500)))
 
 brain_mne.add_label(label, hemi="lh", borders=True)
+
 # Cross-talk functions for MNE and dSPM (and sLORETA) have the same shapes
 # (they may still differ in overall amplitude).
 # Point-spread functions (PSfs) usually differ significantly.

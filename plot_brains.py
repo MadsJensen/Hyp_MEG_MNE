@@ -31,12 +31,12 @@ else:
 os.chdir(data_path)
 
 # Get labels for FreeSurfer 'aparc' cortical parcellation with 34 labels/hemi
-# labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
-#                                     regexp="Brodmann",
-#                                     subjects_dir=subjects_dir)
-
-labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
+labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+                                    regexp="Brodmann",
                                     subjects_dir=subjects_dir)
+
+#labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
+#                                    subjects_dir=subjects_dir)
 
 
 # mnake pd dataframe
@@ -86,10 +86,11 @@ subject_id = "subject_1"
 hemi = "split"
 surf = "inflated"
 brain = Brain(subject_id, hemi, surf)
-labels_press, labels_tone, labels_common = [], [], []
+labels_press = []
+labels_tone, labels_common = [], [], []
 
 for area in list_press:
-    if area not in list_commen:
+#    if area not in list_commen:
         brain.add_label(labels[area],
                         color="blue",
                         alpha=0.7,

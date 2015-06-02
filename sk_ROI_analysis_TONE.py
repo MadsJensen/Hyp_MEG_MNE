@@ -13,10 +13,10 @@ import numpy as np
 
 from mne.minimum_norm import read_inverse_operator, apply_inverse_epochs
 from mne.baseline import rescale
-from sklearn import preprocessing
+# from sklearn import preprocessing
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
-from sklearn.cross_validation import ShuffleSplit, permutation_test_score
+from sklearn.cross_validation import (ShuffleSplit, permutation_test_score)
 
 # Setup paths and prepare raw data
 hostname = socket.gethostname()
@@ -25,7 +25,7 @@ if hostname == "Wintermute":
     data_path = "/home/mje/mnt/Hyp_meg/scratch/Tone_task_MNE/"
     script_path = "/home/mje/mnt/Hyp_meg/scripts/MNE_analysis/"
     subjects_dir = "/home/mje/mnt/Hyp_meg/scratch/fs_subjects_dir/"
-    n_jobs = 3
+    n_jobs = 1
 else:
     data_path = "/scratch1/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
                 "Tone_task_MNE/"
@@ -35,6 +35,7 @@ else:
                    "fs_subjects_dir"
     n_jobs = 4
 
+result_dir = data_path + "/class_result"
 
 # setup clf
 n_splits = 10
@@ -80,42 +81,10 @@ stcs_hyp = apply_inverse_epochs(epochs_hyp, inverse_hyp,
 [stc.resample(250) for stc in stcs_hyp]
 
 label_dir = subjects_dir + "/subject_1/label/"
-
-# lh_BA6 = mne.read_label(label_dir + "lh.BA6.label", subject="subject_1")
-# lh_BA4a = mne.read_label(label_dir + "lh.BA4a.label", subject="subject_1")
-# lh_BA4p = mne.read_label(label_dir + "lh.BA4p.label", subject="subject_1")
-# lh_BA1 = mne.read_label(label_dir + "lh.BA1.label", subject="subject_1")
-# lh_BA2 = mne.read_label(label_dir + "lh.BA2.label", subject="subject_1")
-# lh_BA3a = mne.read_label(label_dir + "lh.BA3a.label", subject="subject_1")
-# lh_BA3b = mne.read_label(label_dir + "lh.BA3b.label", subject="subject_1")
-
-# rh_BA6 = mne.read_label(label_dir + "rh.BA6.label", subject="subject_1")
-# rh_BA4a = mne.read_label(label_dir + "rh.BA4a.label", subject="subject_1")
-# rh_BA4p = mne.read_label(label_dir + "rh.BA4p.label", subject="subject_1")
-# rh_BA1 = mne.read_label(label_dir + "rh.BA1.label", subject="subject_1")
-# rh_BA2 = mne.read_label(label_dir + "rh.BA2.label", subject="subject_1")
-# rh_BA3a = mne.read_label(label_dir + "rh.BA3a.label", subject="subject_1")
-# rh_BA3b = mne.read_label(label_dir + "rh.BA3b.label", subject="subject_1")
-
-# lh_BA4 = lh_BA4a + lh_BA4p
-# lh_S1 = lh_BA1 + lh_BA2 + lh_BA3a + lh_BA3b
-# rh_BA4 = rh_BA4a + rh_BA4p
-# rh_S1 = rh_BA1 + rh_BA2 + rh_BA3a + rh_BA3b
-
-# ROIS = [lh_BA6, lh_BA4a, lh_BA4p, rh_BA6, rh_BA4a, rh_BA4p,
-#         lh_BA1, lh_BA2,lh_BA3a, lh_BA3a, rh_BA1, rh_BA2, rh_BA3a, rh_BA3b]
-
-# ROIS_names = ["lh_BA6", "lh_BAa", "lh_BA4p",
-#               "rh_BA6", "rh_BA4a", "rh_BA4p",
-#               "lh_BA1", "lh_BA2", "lh_BA3a", "lh_BA3b",
-#               "rh_BA1", "rh_BA2", "rh_BA3a", "rh_BA3b"]
-
-# labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
-#                                     regexp="Brodmann",
-#                                     subjects_dir=subjects_dir)
-
-labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
+labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+                                    regexp="Bro",
                                     subjects_dir=subjects_dir)
+labels_name = [label.name for label in labels]
 
 classifiers = [LR]
 clf_names = ["LR"]
@@ -182,9 +151,9 @@ for h, clf in enumerate(classifiers):
         score_results[label.name] = score
         p_results[label.name] = pvalue
 
-    outfile_p_name = "p_results_DKT_tone_surf-normal_" +\
+    outfile_p_name = "p_results_BA_tone_surf-normal_" +\
         "MNE_zscore_-05-0_%s_no-std.csv" % clf_names[h]
-    outfile_score_name = "score_results_DKT_tone_surf-normal_" +\
+    outfile_score_name = "score_results_BA_tone_surf-normal_" +\
         "MNE_zscore_-05-0_%s_no-std.csv" % clf_names[h]
 
     with open(outfile_p_name, "w") as outfile:
