@@ -119,8 +119,9 @@ for h, clf in enumerate(classifiers):
                                            baseline=(None, -0.7),
                                            mode="zscore")]
 
+        # find index for start and stop times
         fromTime = np.argmax(stcs_normal[0].times == 0)
-        toTime = np.argmax(stcs_normal[0].times == 0.2)
+        toTime = np.abs(stcs_normal[0].times - 0.2).argmin()
 
         labelTsNormalRescaledCrop = []
         for j in range(len(labelTsNormal)):
