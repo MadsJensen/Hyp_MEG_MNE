@@ -5,35 +5,7 @@ setwd("/home/mje/mnt/Hyp_meg/scratch/Tone_task_MNE/network_connect_res")
 
 # Libraries ----------------------------------------------------------------
 library(dplyr)
-
-# Functions ---------------------------------------------------------------
-
-permutation_test <- function(a, b, number_permutations=10000){
-    c = c(a, b)
-
-    # Observed difference
-    diff.observed = mean(b) - mean(a)
-
-    diff.random = NULL
-    for (i in 1 : number_permutations) {
-
-        # Sample from the combined dataset
-        a.random = sample (c, length(a), TRUE)
-        b.random = sample (c, length(b), TRUE)
-
-        # Null (permuated) difference
-        diff.random[i] = mean(b.random) - mean(a.random)
-    }
-
-    # P-value is the fraction of how many times the permuted difference is
-    # equal or more extreme than the observed difference
-    pvalue = sum(abs(diff.random) >= abs(diff.observed)) / number_permutations
-    result <- list(pvalue = pvalue,
-                   random = diff.random,
-                   obs_diff = diff.observed)
-    return(result)
-}
-
+library(BayesFactor)
 
 # PRESS load data and run permutation tests--------------------------------------
 
@@ -41,8 +13,8 @@ measures <- c("eff", "deg", "trans")
 bands = c("theta", "alpha", "beta", "gamma_low", "gamma_high")
 atlases <- c("DA")
 
-colum_names <- c("atlas", "measure", "band", "pvalue",
-                 "mean_normal", "mean_hyp", "sd_normal", "sd_hyp", "obs_diff")
+colum_names <- c("atlas", "measure", "band", "BF",
+                 "mean_normal", "mean_hyp", "sd_normal", "sd_hyp")
 
 counter <- 1
 
@@ -62,7 +34,7 @@ for (atlas in atlases){
             normal_cond <- as.matrix(normal_cond)
             hyp_cond <- as.matrix(hyp_cond)
 
-            result <- permutation_test(normal_cond, hyp_cond)
+            result <- ttestBF(normal_cond, hyp_cond)
 
             result_name <- paste(atlas, "_", measure, "_", band, sep = "")
             assign(result_name, result)
@@ -71,23 +43,21 @@ for (atlas in atlases){
                 df <- data.frame(atlas,
                                  measure,
                                  band,
-                                 result$pvalue,
+                                 exp(result@bayesFactor$bf),
                                  mean(normal_cond),
                                  mean(hyp_cond),
                                  sd(normal_cond),
-                                 sd(hyp_cond),
-                                 result$obs_diff)
+                                 sd(hyp_cond))
                 counter <- 2}
             else {
                 df <- rbind(df, data.frame(atlas,
                                            measure,
                                            band,
-                                           result$pvalue,
+                                           exp(result@bayesFactor$bf),
                                            mean(normal_cond),
                                            mean(hyp_cond),
                                            sd(normal_cond),
-                                           sd(hyp_cond),
-                                           result$obs_diff))
+                                           sd(hyp_cond)))
             }
         }
     }
@@ -96,7 +66,6 @@ for (atlas in atlases){
 names(df) <- colum_names
 result_df <- tbl_df(df)
 result_df$condition = "Press"
-result_df$fdr_corr <- p.adjust(result_df$pvalue, method = "fdr")
 
 # TONE load data and run permutation tests--------------------------------------
 
@@ -104,8 +73,8 @@ measures <- c("eff", "deg", "trans")
 bands = c("theta", "alpha", "beta", "gamma_low", "gamma_high")
 atlases <- c("DA")
 
-colum_names <- c("atlas", "measure", "band", "pvalue",
-                 "mean_normal", "mean_hyp", "sd_normal", "sd_hyp", "obs_diff")
+colum_names <- c("atlas", "measure", "band", "BF",
+                 "mean_normal", "mean_hyp", "sd_normal", "sd_hyp")
 result_table <- NULL
 
 counter <- 1
@@ -126,7 +95,7 @@ for (atlas in atlases){
             normal_cond <- as.matrix(normal_cond)
             hyp_cond <- as.matrix(hyp_cond)
 
-            result <- permutation_test(normal_cond, hyp_cond)
+            result <- ttestBF(normal_cond, hyp_cond)
 
             result_name <- paste(atlas, "_", measure, "_", band, sep = "")
             assign(result_name, result)
@@ -135,23 +104,21 @@ for (atlas in atlases){
                 df <- data.frame(atlas,
                                  measure,
                                  band,
-                                 result$pvalue,
+                                 exp(result@bayesFactor$bf),
                                  mean(normal_cond),
                                  mean(hyp_cond),
                                  sd(normal_cond),
-                                 sd(hyp_cond),
-                                 result$obs_diff)
+                                 sd(hyp_cond))
                 counter <- 2}
             else {
                 df <- rbind(df, data.frame(atlas,
                                            measure,
                                            band,
-                                           result$pvalue,
+                                           exp(result@bayesFactor$bf),
                                            mean(normal_cond),
                                            mean(hyp_cond),
                                            sd(normal_cond),
-                                           sd(hyp_cond),
-                                           result$obs_diff))
+                                           sd(hyp_cond)))
             }
         }
     }
@@ -160,13 +127,12 @@ for (atlas in atlases){
 names(df) <- colum_names
 result_tone_df <- tbl_df(df)
 result_tone_df$condition = "Tone"
-result_tone_df$fdr_corr <- p.adjust(result_tone_df$pvalue, method = "fdr")
 
 
 
 # Join and all results ----------------------------------------------------
 
-setwd("~/mnt/Hyp_meg/result")
+# setwd("~/mnt/Hyp_meg/result")
 result_table <- bind_rows(result_df, result_tone_df)
-write.csv(result_table, "results_deg_eff_trans_tone_press.csv")
+# write.csv(result_table, "results_deg_eff_trans_tone_press.csv")
 
