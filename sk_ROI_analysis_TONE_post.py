@@ -14,9 +14,7 @@ import numpy as np
 from mne.minimum_norm import read_inverse_operator, apply_inverse_epochs
 # from mne.baseline import rescale
 from sklearn import preprocessing
-from sklearn import svm
 from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import GaussianNB
 from sklearn.cross_validation import (ShuffleSplit, permutation_test_score)
 
 # Setup paths and prepare raw data
@@ -34,15 +32,13 @@ else:
                   "scripts/MNE_analysis/"
     subjects_dir = "/scratch1/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
                    "fs_subjects_dir"
-    n_jobs = 1
+    n_jobs = 3
 
 result_dir = data_path + "/class_result"
 
 # setup clf
 n_splits = 10
-gnb = GaussianNB()
 LR = LogisticRegression()
-svc = svm.SVC()
 
 os.chdir(data_path)
 
@@ -95,8 +91,8 @@ labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
 #                                     regexp="Bro",
 #                                     subjects_dir=subjects_dir)
 
-classifiers = [svc, gnb, LR]
-clf_names = ["SVM", "GNB", "LR"]
+classifiers = [LR]
+clf_names = ["LR"]
 
 for h, clf in enumerate(classifiers):
     p_results = {}
@@ -115,40 +111,12 @@ for h, clf in enumerate(classifiers):
                                                    mode='mean',
                                                    return_generator=False)
 
-        # labelTsNormalRescaled = []
-        # for j in range(len(labelTsNormal)):
-        #     labelTsNormalRescaled += [rescale(labelTsNormal[j],
-        #                                       stcs_normal[0].times,
-        #                                       baseline=(None, -0.7),
-        #                                       mode="zscore")]
-
-        # labelTsHypRescaled = []
-        # for j in range(len(labelTsHyp)):
-        #     labelTsHypRescaled += [rescale(labelTsHyp[j],
-        #                                    stcs_hyp[0].times,
-        #                                    baseline=(None, -0.7),
-        #                                    mode="zscore")]
-
-        # # find index for start and stop times
-        # from_time = np.abs(stcs_normal[0].times - 0).argmin()
-        # to_time = np.abs(stcs_normal[0].times - 0.5).argmin()
-
-        # labelTsNormalRescaledCrop = []
-        # for j in range(len(labelTsNormal)):
-        #     labelTsNormalRescaledCrop +=\
-        #         [labelTsNormalRescaled[j][:, from_time:to_time]]
-
-        # labelTsHypRescaledCrop = []
-        # for j in range(len(labelTsHyp)):
-        #     labelTsHypRescaledCrop +=\
-        #         [labelTsHypRescaled[j][:, from_time:to_time]]
-
         X = np.vstack([labelTsNormal, labelTsHyp])
         X = X[:, 0, :]
         y = np.concatenate([np.zeros(len(labelTsNormal)),
                             np.ones(len(labelTsHyp))])
 
-        # X = X * 1e11
+        X = X * 1e11
         X_pre = preprocessing.scale(X)
         cv = ShuffleSplit(len(X), n_splits, test_size=0.2)
         print "Working on: ", label.name
@@ -156,7 +124,7 @@ for h, clf in enumerate(classifiers):
         score, permutation_scores, pvalue =\
             permutation_test_score(
                 clf, X, y, scoring="accuracy",
-                cv=cv, n_permutations=10000,
+                cv=cv, n_permutations=5000,
                 n_jobs=n_jobs)
 
         score_results[label.name] = score

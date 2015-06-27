@@ -14,9 +14,7 @@ import numpy as np
 from mne.minimum_norm import read_inverse_operator, apply_inverse_epochs
 # from mne.baseline import rescale
 from sklearn import preprocessing
-from sklearn import svm
 from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import GaussianNB
 from sklearn.cross_validation import (ShuffleSplit, permutation_test_score)
 
 # Setup paths and prepare raw data
@@ -34,15 +32,13 @@ else:
                   "scripts/MNE_analysis/"
     subjects_dir = "/scratch1/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
                    "fs_subjects_dir"
-    n_jobs = 1
+    n_jobs = 3
 
 result_dir = data_path + "/class_result"
 
 # setup clf
 n_splits = 10
-gnb = GaussianNB()
 LR = LogisticRegression()
-svc = svm.SVC()
 
 os.chdir(data_path)
 
@@ -54,8 +50,8 @@ inverse_fhyp = data_path + "tone_task_hyp-inv.fif"
 epochs_normal = mne.read_epochs(epochs_fnormal)
 epochs_hyp = mne.read_epochs(epochs_fhyp)
 
-epochs_normal = epochs_normal["Tone"]
-epochs_hyp = epochs_hyp["Tone"]
+epochs_normal = epochs_normal["press"]
+epochs_hyp = epochs_hyp["press"]
 
 
 snr = 1.0  # Standard assumption for average data but using it for single trial
@@ -83,8 +79,8 @@ stcs_hyp = apply_inverse_epochs(epochs_hyp, inverse_hyp,
 [stc.resample(250) for stc in stcs_hyp]
 
 # Crop
-[stc.crop(0, 0.2) for stc in stcs_normal]
-[stc.crop(0, 0.2) for stc in stcs_hyp]
+[stc.crop(0, 0.5) for stc in stcs_normal]
+[stc.crop(0, 0.5) for stc in stcs_hyp]
 
 label_dir = subjects_dir + "/subject_1/label/"
 
@@ -95,8 +91,8 @@ labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
 #                                     regexp="Bro",
 #                                     subjects_dir=subjects_dir)
 
-classifiers = [svc, gnb, LR]
-clf_names = ["SVM", "GNB", "LR"]
+classifiers = [LR]
+clf_names = ["LR"]
 
 for h, clf in enumerate(classifiers):
     p_results = {}
@@ -156,16 +152,16 @@ for h, clf in enumerate(classifiers):
         score, permutation_scores, pvalue =\
             permutation_test_score(
                 clf, X, y, scoring="accuracy",
-                cv=cv, n_permutations=10000,
+                cv=cv, n_permutations=5000,
                 n_jobs=n_jobs)
 
         score_results[label.name] = score
         p_results[label.name] = pvalue
 
-    outfile_p_name = "p_results_DA_tone_surf-normal_" +\
-        "dSPM_0-02_%s_std_mean.csv" % clf_names[h]
-    outfile_score_name = "score_results_DA_tone_surf-normal_" +\
-        "dSPM_0-02_%s_std_mean.csv" % clf_names[h]
+    outfile_p_name = "p_results_DA_press_surf-normal_" +\
+        "dSPM_0-05_%s_std_mean.csv" % clf_names[h]
+    outfile_score_name = "score_results_DA_press_surf-normal_" +\
+        "dSPM_0-05_%s_std_mean.csv" % clf_names[h]
 
     with open(outfile_p_name, "w") as outfile:
         writer = csv.writer(outfile)

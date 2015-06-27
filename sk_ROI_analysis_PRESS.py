@@ -12,8 +12,9 @@ import socket
 import numpy as np
 
 from mne.minimum_norm import read_inverse_operator, apply_inverse_epochs
-from mne.baseline import rescale
+# from mne.baseline import rescale
 from sklearn import preprocessing
+from sklearn import svm
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.cross_validation import (ShuffleSplit, permutation_test_score)
@@ -39,8 +40,9 @@ result_dir = data_path + "/class_result"
 
 # setup clf
 n_splits = 10
-ngb = GaussianNB()
+gnb = GaussianNB()
 LR = LogisticRegression()
+svc = svm.SVC()
 
 os.chdir(data_path)
 
@@ -58,7 +60,7 @@ epochs_hyp = epochs_hyp["press"]
 
 snr = 1.0  # Standard assumption for average data but using it for single trial
 lambda2 = 1.0 / snr ** 2
-method = "MNE"
+method = "dSPM"
 
 # Load data
 inverse_normal = read_inverse_operator(inverse_fnormal)
@@ -76,21 +78,25 @@ stcs_hyp = apply_inverse_epochs(epochs_hyp, inverse_hyp,
                                 pick_ori="normal",
                                 return_generator=False)
 
-# resample
+# Resample
 [stc.resample(250) for stc in stcs_normal]
 [stc.resample(250) for stc in stcs_hyp]
 
+# Crop
+[stc.crop(0, 0.5) for stc in stcs_normal]
+[stc.crop(0, 0.5) for stc in stcs_hyp]
+
 label_dir = subjects_dir + "/subject_1/label/"
 
-# labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
-#                                     subjects_dir=subjects_dir)
-labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
-                                    regexp="Bro",
+labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
+                                    regexp="[G|S]",
                                     subjects_dir=subjects_dir)
-labels_name = [label.name for label in labels]
+# labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+#                                     regexp="Bro",
+#                                     subjects_dir=subjects_dir)
 
-classifiers = [LR]
-clf_names = ["LR"]
+classifiers = [svc, gnb, LR]
+clf_names = ["SVM", "GNB", "LR"]
 
 for h, clf in enumerate(classifiers):
     p_results = {}
@@ -100,65 +106,66 @@ for h, clf in enumerate(classifiers):
         labelTsNormal = mne.extract_label_time_course(stcs_normal,
                                                       labels=label,
                                                       src=src_normal,
-                                                      mode='mean_flip',
+                                                      mode='mean',
                                                       return_generator=False)
 
         labelTsHyp = mne.extract_label_time_course(stcs_hyp,
                                                    labels=label,
                                                    src=src_hyp,
-                                                   mode='mean_flip',
+                                                   mode='mean',
                                                    return_generator=False)
 
-        labelTsNormalRescaled = []
-        for j in range(len(labelTsNormal)):
-            labelTsNormalRescaled += [rescale(labelTsNormal[j],
-                                              stcs_normal[0].times,
-                                              baseline=(None, -0.7),
-                                              mode="zscore")]
+        # labelTsNormalRescaled = []
+        # for j in range(len(labelTsNormal)):
+        #     labelTsNormalRescaled += [rescale(labelTsNormal[j],
+        #                                       stcs_normal[0].times,
+        #                                       baseline=(None, -0.7),
+        #                                       mode="zscore")]
 
-        labelTsHypRescaled = []
-        for j in range(len(labelTsHyp)):
-            labelTsHypRescaled += [rescale(labelTsHyp[j],
-                                           stcs_hyp[0].times,
-                                           baseline=(None, -0.7),
-                                           mode="zscore")]
+        # labelTsHypRescaled = []
+        # for j in range(len(labelTsHyp)):
+        #     labelTsHypRescaled += [rescale(labelTsHyp[j],
+        #                                    stcs_hyp[0].times,
+        #                                    baseline=(None, -0.7),
+        #                                    mode="zscore")]
 
-        # find index for start and stop times
-        fromTime = np.argmax(stcs_normal[0].times == 0)
-        toTime = np.abs(stcs_normal[0].times - 0.2).argmin()
+        # # find index for start and stop times
+        # from_time = np.abs(stcs_normal[0].times - 0).argmin()
+        # to_time = np.abs(stcs_normal[0].times - 0.5).argmin()
 
-        labelTsNormalRescaledCrop = []
-        for j in range(len(labelTsNormal)):
-            labelTsNormalRescaledCrop +=\
-                [labelTsNormalRescaled[j][:, fromTime:toTime]]
+        # labelTsNormalRescaledCrop = []
+        # for j in range(len(labelTsNormal)):
+        #     labelTsNormalRescaledCrop +=\
+        #         [labelTsNormalRescaled[j][:, from_time:to_time]]
 
-        labelTsHypRescaledCrop = []
-        for j in range(len(labelTsHyp)):
-            labelTsHypRescaledCrop +=\
-                [labelTsHypRescaled[j][:, fromTime:toTime]]
+        # labelTsHypRescaledCrop = []
+        # for j in range(len(labelTsHyp)):
+        #     labelTsHypRescaledCrop +=\
+        #         [labelTsHypRescaled[j][:, from_time:to_time]]
 
-        X = np.vstack([labelTsNormalRescaledCrop, labelTsHypRescaledCrop])
+        X = np.vstack([labelTsNormal, labelTsHyp])
         X = X[:, 0, :]
-        y = np.concatenate([np.zeros(len(labelTsNormalRescaledCrop)),
-                            np.ones(len(labelTsHypRescaledCrop))])
+        y = np.concatenate([np.zeros(len(labelTsNormal)),
+                            np.ones(len(labelTsHyp))])
 
-        X = preprocessing.scale(X)
+        # X = X * 1e11
+        X_pre = preprocessing.scale(X)
         cv = ShuffleSplit(len(X), n_splits, test_size=0.2)
         print "Working on: ", label.name
 
         score, permutation_scores, pvalue =\
             permutation_test_score(
                 clf, X, y, scoring="accuracy",
-                cv=cv, n_permutations=5000,
+                cv=cv, n_permutations=10000,
                 n_jobs=n_jobs)
 
         score_results[label.name] = score
         p_results[label.name] = pvalue
 
-    outfile_p_name = "p_results_BA_press_surf-normal_" +\
-        "MNE_zscore_0-02_%s_std.csv" % clf_names[h]
-    outfile_score_name = "score_results_BA_press_surf-normal_" +\
-        "MNE_zscore_0-02_%s_std.csv" % clf_names[h]
+    outfile_p_name = "p_results_DA_press_surf-normal_" +\
+        "dSPM_-02-0_%s_std_mean.csv" % clf_names[h]
+    outfile_score_name = "score_results_DA_press_surf-normal_" +\
+        "dSPM_-02-0_%s_std_mean.csv" % clf_names[h]
 
     with open(outfile_p_name, "w") as outfile:
         writer = csv.writer(outfile)

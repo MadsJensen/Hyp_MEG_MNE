@@ -198,34 +198,34 @@ def plot_TS_from_ROI(TS_1, TS_2, name, times, y_label="MI value", show=True):
 
 # %% load Class csv file
 classf_press = pd.read_csv(
-    "p_results_BA_press_surf-normal_MNE_zscore_-02-0_LR_no-std.csv",
+    "p_results_BA_press_surf-normal_MNE_zscore_0-05_LR_std.csv",
     header=None)
 classf_press.columns = ["area", "pval"]  # rename columns
 classf_press = classf_press.sort("area")
 
 res_score = pd.read_csv(
-    "score_results_BA_press_surf-normal_MNE_zscore_-02-0_LR_no-std.csv",
+    "score_results_BA_press_surf-normal_MNE_zscore_0-05_LR_std.csv",
     header=None)
 
 classf_press["score"] = res_score[1]
 classf_press["rejected"], classf_press["pval_corr"] =\
     fdr_correction(classf_press["pval"])
 classf_press.index = range(0, len(classf_press))
-    
 
 classf_press["rejected"], classf_press["pval_corr"] =\
     fdr_correction(classf_press["pval"])
 
-print classf_press[classf_press["rejected"]  == True]
+print classf_press[classf_press["rejected"] == True]
+
 
 classf_tone = pd.read_csv(
-    "p_results_BA_tone_surf-normal_MNE_zscore_-05-0_LR_no-std.csv",
+    "p_results_BA_tone_surf-normal_MNE_zscore_0-02_LR_std.csv",
     header=None)
 classf_tone.columns = ["area", "pval"]  # rename columns
 classf_tone = classf_tone.sort("area")
 
 res_score = pd.read_csv(
-    "score_results_BA_tone_surf-normal_MNE_zscore_-05-0_LR_no-std.csv",
+    "score_results_BA_tone_surf-normal_MNE_zscore_-05-0_LR_std.csv",
     header=None)
 
 classf_tone["score"] = res_score[1]
@@ -235,7 +235,7 @@ classf_tone["rejected"], classf_tone["pval_corr"] =\
     fdr_correction(classf_tone["pval"])
 classf_tone.index = range(0, len(classf_tone))
 
-print classf_tone[classf_tone["rejected"]  == True]
+print classf_tone[classf_tone["rejected"] == True]
 
 
 # %% network connect

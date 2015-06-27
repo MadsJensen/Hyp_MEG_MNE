@@ -7,17 +7,21 @@ Created on Wed May 21 15:21:02 2014
 
 import mne
 import os
-import csv
 import socket
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from mne.minimum_norm import read_inverse_operator, apply_inverse_epochs
 # from mne.baseline import rescale
 from sklearn import preprocessing
-from sklearn import svm
 from sklearn.linear_model import LogisticRegression
+from sklearn import svm
 from sklearn.naive_bayes import GaussianNB
-from sklearn.cross_validation import (ShuffleSplit, permutation_test_score)
+from sklearn.cross_validation import StratifiedShuffleSplit
+from sklearn.metrics import roc_curve, auc
+from sklearn.grid_search import GridSearchCV
+from scipy import interp
 
 # Setup paths and prepare raw data
 hostname = socket.gethostname()
@@ -39,10 +43,12 @@ else:
 result_dir = data_path + "/class_result"
 
 # setup clf
-n_splits = 10
-gnb = GaussianNB()
+n_folds = 10
 LR = LogisticRegression()
-svc = svm.SVC()
+svc = svm.SVC(probability=True)
+gnb = GaussianNB()
+
+Cs = np.logspace(-4, 4, 100)
 
 os.chdir(data_path)
 
@@ -54,13 +60,13 @@ inverse_fhyp = data_path + "tone_task_hyp-inv.fif"
 epochs_normal = mne.read_epochs(epochs_fnormal)
 epochs_hyp = mne.read_epochs(epochs_fhyp)
 
-epochs_normal = epochs_normal["Tone"]
-epochs_hyp = epochs_hyp["Tone"]
+epochs_normal = epochs_normal["press"]
+epochs_hyp = epochs_hyp["press"]
 
 
 snr = 1.0  # Standard assumption for average data but using it for single trial
 lambda2 = 1.0 / snr ** 2
-method = "dSPM"
+method = "MNE"
 
 # Load data
 inverse_normal = read_inverse_operator(inverse_fnormal)
@@ -83,26 +89,30 @@ stcs_hyp = apply_inverse_epochs(epochs_hyp, inverse_hyp,
 [stc.resample(250) for stc in stcs_hyp]
 
 # Crop
-[stc.crop(0, 0.2) for stc in stcs_normal]
-[stc.crop(0, 0.2) for stc in stcs_hyp]
+[stc.crop(-0.2, 0) for stc in stcs_normal]
+[stc.crop(-0.2, 0) for stc in stcs_hyp]
 
 label_dir = subjects_dir + "/subject_1/label/"
+
 
 labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
                                     regexp="[G|S]",
                                     subjects_dir=subjects_dir)
-# labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
-#                                     regexp="Bro",
-#                                     subjects_dir=subjects_dir)
 
-classifiers = [svc, gnb, LR]
-clf_names = ["SVM", "GNB", "LR"]
+labels_single = [labels[101]]
+
+
+tuned_parameters = [{"C": Cs}]
+
+
+classifiers = [LR]
+clf_names = ["LR"]
 
 for h, clf in enumerate(classifiers):
     p_results = {}
     score_results = {}
-
-    for label in labels:
+    plt.figure()
+    for label in labels_single:
         labelTsNormal = mne.extract_label_time_course(stcs_normal,
                                                       labels=label,
                                                       src=src_normal,
@@ -115,64 +125,50 @@ for h, clf in enumerate(classifiers):
                                                    mode='mean',
                                                    return_generator=False)
 
-        # labelTsNormalRescaled = []
-        # for j in range(len(labelTsNormal)):
-        #     labelTsNormalRescaled += [rescale(labelTsNormal[j],
-        #                                       stcs_normal[0].times,
-        #                                       baseline=(None, -0.7),
-        #                                       mode="zscore")]
-
-        # labelTsHypRescaled = []
-        # for j in range(len(labelTsHyp)):
-        #     labelTsHypRescaled += [rescale(labelTsHyp[j],
-        #                                    stcs_hyp[0].times,
-        #                                    baseline=(None, -0.7),
-        #                                    mode="zscore")]
-
-        # # find index for start and stop times
-        # from_time = np.abs(stcs_normal[0].times - 0).argmin()
-        # to_time = np.abs(stcs_normal[0].times - 0.5).argmin()
-
-        # labelTsNormalRescaledCrop = []
-        # for j in range(len(labelTsNormal)):
-        #     labelTsNormalRescaledCrop +=\
-        #         [labelTsNormalRescaled[j][:, from_time:to_time]]
-
-        # labelTsHypRescaledCrop = []
-        # for j in range(len(labelTsHyp)):
-        #     labelTsHypRescaledCrop +=\
-        #         [labelTsHypRescaled[j][:, from_time:to_time]]
-
         X = np.vstack([labelTsNormal, labelTsHyp])
         X = X[:, 0, :]
         y = np.concatenate([np.zeros(len(labelTsNormal)),
                             np.ones(len(labelTsHyp))])
 
-        # X = X * 1e11
-        X_pre = preprocessing.scale(X)
-        cv = ShuffleSplit(len(X), n_splits, test_size=0.2)
+        X = X * 1e11
+        X = preprocessing.scale(X)
+        cv = StratifiedShuffleSplit(y, test_size=0.2)
         print "Working on: ", label.name
 
-        score, permutation_scores, pvalue =\
-            permutation_test_score(
-                clf, X, y, scoring="accuracy",
-                cv=cv, n_permutations=10000,
-                n_jobs=n_jobs)
+        # grid = GridSearchCV(estimator=LR, param_grid={"C": Cs})
+        # grid.fit(X, y)
+        # print(grid)
+        # # summarize the results of the grid search
+        # print(grid.best_score_)
+        # print(grid.best_estimator_)
 
-        score_results[label.name] = score
-        p_results[label.name] = pvalue
+        mean_tpr = 0.0
+        mean_fpr = np.linspace(0, 1, 100)
+        all_tpr = []
 
-    outfile_p_name = "p_results_DA_tone_surf-normal_" +\
-        "dSPM_0-02_%s_std_mean.csv" % clf_names[h]
-    outfile_score_name = "score_results_DA_tone_surf-normal_" +\
-        "dSPM_0-02_%s_std_mean.csv" % clf_names[h]
+        # logistic = LogisticRegression(C=grid.best_params_["C"])
+        for i, (train, test) in enumerate(cv):
+            probas_ = LR.fit(X[train], y[train]).predict_proba(X[test])
+            # Compute ROC curve and area the curve
+            fpr, tpr, thresholds = roc_curve(y[test], probas_[:, 1])
+            mean_tpr += interp(mean_fpr, fpr, tpr)
+            mean_tpr[0] = 0.0
+            roc_auc = auc(fpr, tpr)
+            plt.plot(fpr, tpr, lw=1,
+                     label='ROC fold %d (area = %0.2f)' % (i, roc_auc))
 
-    with open(outfile_p_name, "w") as outfile:
-        writer = csv.writer(outfile)
-        for key, val in p_results.items():
-            writer.writerow([key, val])
+        plt.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='Luck')
 
-    with open(outfile_score_name, "w") as outfile:
-        writer = csv.writer(outfile)
-        for key, val in score_results.items():
-            writer.writerow([key, val])
+        mean_tpr /= len(cv)
+        mean_tpr[-1] = 1.0
+        mean_auc = auc(mean_fpr, mean_tpr)
+        plt.plot(mean_fpr, mean_tpr, 'k--',
+                 label='Mean ROC (area = %0.2f)' % mean_auc, lw=2)
+
+        plt.xlim([-0.05, 1.05])
+        plt.ylim([-0.05, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('Receiver operating characteristic example')
+        plt.legend(loc="lower right")
+        plt.show()

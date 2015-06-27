@@ -1,7 +1,7 @@
 import numpy as np
 import networkx as nx
 import numpy.random as npr
-import cPickle as pickle
+# import cPickle as pickle
 import os
 import socket
 import mne
@@ -9,7 +9,7 @@ import bct
 # import cPickle as pickle
 
 from mne.minimum_norm import (apply_inverse_epochs, read_inverse_operator)
-from mne.baseline import rescale
+# from mne.baseline import rescale
 from nitime.analysis import MTCoherenceAnalyzer
 from nitime import TimeSeries
 # from mne.stats import fdr_correction
@@ -45,7 +45,7 @@ else:
                 "Tone_task_MNE/"
     subjects_dir = "/scratch1/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
                    "fs_subjects_dir"
-    n_jobs = 4
+    n_jobs = 1
 
 result_dir = data_path + "network_connect_res"
 
@@ -64,7 +64,7 @@ reject = dict(grad=4000e-13,  # T / m (gradiometers)
 # %%
 snr = 1.0  # Standard assumption for average data but using it for single trial
 lambda2 = 1.0 / snr ** 2
-method = "MNE"
+method = "dSPM"
 
 # Load data
 inverse_normal = read_inverse_operator(inverse_fnormal)
@@ -78,85 +78,91 @@ epochs_hyp = epochs_hyp["Tone"]
 
 
 # %%
-stcsNormal = apply_inverse_epochs(epochs_normal, inverse_normal, lambda2,
-                                  method, pick_ori="normal",
-                                  return_generator=False)
-stcsHyp = apply_inverse_epochs(epochs_hyp, inverse_hyp, lambda2,
-                               method, pick_ori="normal",
-                               return_generator=False)
+stcs_normal = apply_inverse_epochs(epochs_normal, inverse_normal, lambda2,
+                                   method, pick_ori="normal",
+                                   return_generator=False)
+stcs_hyp = apply_inverse_epochs(epochs_hyp, inverse_hyp, lambda2,
+                                method, pick_ori="normal",
+                                return_generator=False)
 
 
 # resample
-[stc.resample(250) for stc in stcsNormal]
-[stc.resample(250) for stc in stcsHyp]
+[stc.resample(250) for stc in stcs_normal]
+[stc.resample(250) for stc in stcs_hyp]
+
+[stc.crop(0, 0.5) for stc in stcs_normal]
+[stc.crop(0, 0.5) for stc in stcs_hyp]
 
 # Get labels from FreeSurfer cortical parcellation
-# labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
-#                                     regexp="[G|S]",
-#                                     subjects_dir=subjects_dir)
+labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
+                                    regexp="[G|S]",
+                                    subjects_dir=subjects_dir)
 
 # labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
 #                                     subjects_dir=subjects_dir)
 
-labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
-                                    regexp="Bro",
-                                    subjects_dir=subjects_dir)
+# labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+#                                     regexp="Bro",
+#                                     subjects_dir=subjects_dir)
 labels_name = [label.name for label in labels]
 
 # Average the source estimates within eachh label using sign-flips to reduce
 # signal cancellations, also here we return a generator
 src_normal = inverse_normal['src']
-labelTsNormal = mne.extract_label_time_course(stcsNormal, labels,
-                                              src_normal,
-                                              mode='mean_flip',
-                                              return_generator=False)
+label_ts_Normal = mne.extract_label_time_course(stcs_normal,
+                                                labels,
+                                                src_normal,
+                                                mode='mean',
+                                                return_generator=False)
 
 src_hyp = inverse_hyp['src']
-labelTsHyp = mne.extract_label_time_course(stcsHyp, labels, src_hyp,
-                                           mode='mean_flip',
-                                           return_generator=False)
+label_ts_Hyp = mne.extract_label_time_course(stcs_hyp,
+                                             labels,
+                                             src_hyp,
+                                             mode='mean',
+                                             return_generator=False)
 
 # standardize TS's
-labelTsNormalRescaled = []
-for j in range(len(labelTsNormal)):
-    labelTsNormalRescaled += [rescale(labelTsNormal[j], epochs_normal.times,
-                                      baseline=(None, -0.7), mode="zscore")]
+# labelTsNormalRescaled = []
+# for j in range(len(label_ts_Normal)):
+# labelTsNormalRescaled += [rescale(label_ts_Normal[j], epochs_normal.times,
+#                                       baseline=(None, -0.7), mode="zscore")]
 
-labelTsHypRescaled = []
-for j in range(len(labelTsHyp)):
-    labelTsHypRescaled += [rescale(labelTsHyp[j], epochs_hyp.times,
-                                   baseline=(None, -0.7), mode="zscore")]
+# labelTsHypRescaled = []
+# for j in range(len(label_ts_Hyp)):
+#     labelTsHypRescaled += [rescale(label_ts_Hyp[j], epochs_hyp.times,
+#                                    baseline=(None, -0.7), mode="zscore")]
 
 
-fromTime = np.argmax(stcsNormal[0].times == -0.5)
-toTime = np.argmax(stcsNormal[0].times == 0)
+# fromTime = np.argmax(stcs_normal[0].times == 0)
+# toTime = np.argmax(stcs_normal[0].times == 0.5)
 
-labelTsNormalRescaledCrop = []
-for j in range(len(labelTsNormal)):
-    labelTsNormalRescaledCrop += [labelTsNormalRescaled[j][:, fromTime:toTime]]
+# labelTsNormalRescaledCrop = []
+# for j in range(len(label_ts_Normal)):
+# labelTsNormalRescaledCrop += [labelTsNormalRescaled[j][:, fromTime:toTime]]
 
-labelTsHypRescaledCrop = []
-for j in range(len(labelTsHyp)):
-    labelTsHypRescaledCrop += [labelTsHypRescaled[j][:, fromTime:toTime]]
+# labelTsHypRescaledCrop = []
+# for j in range(len(label_ts_Hyp)):
+#     labelTsHypRescaledCrop += [labelTsHypRescaled[j][:, fromTime:toTime]]
 
 
 # %%
-cohListNormal = []
-cohListHyp = []
+coh_list_normal = []
+coh_list_hyp = []
 
-for j in range(len(labelTsNormalRescaledCrop)):
-    nits = TimeSeries(labelTsNormalRescaledCrop[j],
+for j in range(len(label_ts_Normal)):
+    nits = TimeSeries(label_ts_Normal[j] * 1e10,
                       sampling_rate=250)  # epochs_normal.info["sfreq"])
     nits.metadata["roi"] = labels_name
 
-    cohListNormal += [MTCoherenceAnalyzer(nits)]
+    coh_list_normal += [MTCoherenceAnalyzer(nits)]
 
-for j in range(len(labelTsHypRescaledCrop)):
-    nits = TimeSeries(labelTsHypRescaledCrop[j],
+for j in range(len(label_ts_Hyp)):
+    nits = TimeSeries(label_ts_Hyp[j] * 1e10,
                       sampling_rate=250)  # epochs_normal.info["sfreq"])
     nits.metadata["roi"] = labels_name
 
-    cohListHyp += [MTCoherenceAnalyzer(nits)]
+    coh_list_hyp += [MTCoherenceAnalyzer(nits)]
 
 # Compute a source estimate per frequency band
 bands = dict(theta=[4, 8],
@@ -177,36 +183,36 @@ for band in bands.keys():
     # extract coherence values
     f_lw, f_up = bands[band]  # lower & upper limit for frequencies
 
-    cohMatrixNormal = np.empty([len(labels_name),
-                                len(labels_name),
-                                len(labelTsNormalRescaledCrop)])
-    cohMatrixHyp = np.empty([len(labels_name),
-                             len(labels_name),
-                             len(labelTsHypRescaledCrop)])
+    coh_matrix_normal = np.empty([len(labels_name),
+                                  len(labels_name),
+                                  len(label_ts_Normal)])
+    coh_matrix_hyp = np.empty([len(labels_name),
+                               len(labels_name),
+                               len(label_ts_Hyp)])
 
-    # confine analysis to Aplha (8  12 Hz)
-    freq_idx = np.where((cohListHyp[0].frequencies >= f_lw) *
-                        (cohListHyp[0].frequencies <= f_up))[0]
+    # confine analysis to specific band
+    freq_idx = np.where((coh_list_hyp[0].frequencies >= f_lw) *
+                        (coh_list_hyp[0].frequencies <= f_up))[0]
 
-    print cohListNormal[0].frequencies[freq_idx]
+    print coh_list_normal[0].frequencies[freq_idx]
 
     # compute average coherence &  Averaging on last dimension
-    for j in range(cohMatrixNormal.shape[2]):
-        cohMatrixNormal[:, :, j] = np.mean(
-            cohListNormal[j].coherence[:, :, freq_idx], -1)
+    for j in range(coh_matrix_normal.shape[2]):
+        coh_matrix_normal[:, :, j] = np.mean(
+            coh_list_normal[j].coherence[:, :, freq_idx], -1)
 
-    for j in range(cohMatrixHyp.shape[2]):
-        cohMatrixHyp[:, :, j] = np.mean(
-            cohListHyp[j].coherence[:, :, freq_idx], -1)
+    for j in range(coh_matrix_hyp.shape[2]):
+        coh_matrix_hyp[:, :, j] = np.mean(
+            coh_list_hyp[j].coherence[:, :, freq_idx], -1)
 
     #
-    fullMatrix = np.concatenate([cohMatrixNormal, cohMatrixHyp], axis=2)
+    fullMatrix = np.concatenate([coh_matrix_normal, coh_matrix_hyp], axis=2)
 
     threshold = np.median(fullMatrix[np.nonzero(fullMatrix)]) + \
         np.std(fullMatrix[np.nonzero(fullMatrix)])
 
-    binMatrixNormal = cohMatrixNormal > threshold
-    binMatrixHyp = cohMatrixHyp > threshold
+    binMatrixNormal = coh_matrix_normal > threshold
+    binMatrixHyp = coh_matrix_hyp > threshold
 
     #
     nxNormal = []
@@ -232,39 +238,39 @@ for band in bands.keys():
                             for g in nxNormal])
 
     deg_hyp = np.asarray([np.mean(g.degree().values())
-                         for g in nxHyp])
+                          for g in nxHyp])
 
     deg_normal = np.asarray([np.mean(g.degree().values())
                             for g in nxNormal])
 
     trans_hyp = np.asarray([nx.cluster.transitivity(g)
-                           for g in nxHyp])
+                            for g in nxHyp])
 
     trans_normal = np.asarray([nx.cluster.transitivity(g)
                                for g in nxNormal])
 
-    np.savetxt("network_connect_res/deg_tone_normal_BA_%s.csv"
+    np.savetxt("network_connect_res/deg_tone_normal_DA_%s_MTC_MNE.csv"
                % band, deg_normal)
-    np.savetxt("network_connect_res/deg_tone_hyp_BA_%s.csv"
+    np.savetxt("network_connect_res/deg_tone_hyp_DA_%s_MTC_MNE.csv"
                % band, deg_hyp)
 
-    np.savetxt("network_connect_res/cc_tone_normal_BA_%s.csv"
+    np.savetxt("network_connect_res/cc_tone_normal_DA_%s_MTC_MNE.csv"
                % band, cc_normal)
-    np.savetxt("network_connect_res/cc_tone_hyp_BA_%s.csv"
+    np.savetxt("network_connect_res/cc_tone_hyp_DA_%s_MTC_MNE.csv"
                % band, cc_hyp)
 
-    np.savetxt("network_connect_res/trans_tone_normal_BA_%s.csv"
+    np.savetxt("network_connect_res/trans_tone_normal_DA_%s_MTC_MNE.csv"
                % band, trans_normal)
-    np.savetxt("network_connect_res/trans_tone_hyp_BA_%s.csv"
+    np.savetxt("network_connect_res/trans_tone_hyp_DA_%s_MTC_MNE.csv"
                % band, trans_hyp)
 
-    np.savetxt("network_connect_res/eff_tone_normal_BA_%s.csv"
+    np.savetxt("network_connect_res/eff_tone_normal_DA_%s_MTC_MNE.csv"
                % band, eff_normal)
-    np.savetxt("network_connect_res/eff_tone_hyp_BA_%s.csv"
+    np.savetxt("network_connect_res/eff_tone_hyp_DA_%s_MTC_MNE.csv"
                % band, eff_hyp)
 
 #
-#    pval, obs_diff, diffs =\
+#    Pval, obs_diff, diffs =\
 #        permutation_test(cc_normal, cc_hyp, 10000, np.mean)
 #    print band, pval, obs_diff, np.mean(diffs)
 #

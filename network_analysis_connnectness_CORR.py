@@ -5,11 +5,10 @@ import cPickle as pickle
 import os
 import socket
 import mne
-import bct
 # import cPickle as pickle
 
 from mne.minimum_norm import (apply_inverse_epochs, read_inverse_operator)
-from mne.baseline import rescale
+# from mne.baseline import rescale
 from nitime.analysis import CorrelationAnalyzer
 from nitime import TimeSeries
 # from mne.stats import fdr_correction
@@ -64,7 +63,7 @@ reject = dict(grad=4000e-13,  # T / m (gradiometers)
 # %%
 snr = 1.0  # Standard assumption for average data but using it for single trial
 lambda2 = 1.0 / snr ** 2
-method = "MNE"
+method = "dSPM"
 
 # Load data
 inverse_normal = read_inverse_operator(inverse_fnormal)
@@ -78,76 +77,84 @@ epochs_hyp = epochs_hyp["press"]
 
 
 # %%
-stcsNormal = apply_inverse_epochs(epochs_normal, inverse_normal, lambda2,
-                                  method, pick_ori="normal",
-                                  return_generator=False)
-stcsHyp = apply_inverse_epochs(epochs_hyp, inverse_hyp, lambda2,
-                               method, pick_ori="normal",
-                               return_generator=False)
+stcs_normal = apply_inverse_epochs(epochs_normal, inverse_normal, lambda2,
+                                   method, pick_ori="normal",
+                                   return_generator=False)
+stcs_hyp = apply_inverse_epochs(epochs_hyp, inverse_hyp, lambda2,
+                                method, pick_ori="normal",
+                                return_generator=False)
 
 
 # resample
-[stc.resample(250) for stc in stcsNormal]
-[stc.resample(250) for stc in stcsHyp]
+[stc.resample(250) for stc in stcs_normal]
+[stc.resample(250) for stc in stcs_hyp]
+
+
+[stc.crop(0, 0.5) for stc in stcs_normal]
+[stc.crop(0, 0.5) for stc in stcs_hyp]
 
 # Get labels from FreeSurfer cortical parcellation
-# labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
-#                                     regexp="[G|S]",
+# labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+#                                     regexp="Bro",
 #                                     subjects_dir=subjects_dir)
-labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
+
+labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
                                     subjects_dir=subjects_dir)
 labels_name = [label.name for label in labels]
 
 # Average the source estimates within eachh label using sign-flips to reduce
 # signal cancellations, also here we return a generator
 src_normal = inverse_normal['src']
-labelTsNormal = mne.extract_label_time_course(stcsNormal, labels,
+labelTsNormal = mne.extract_label_time_course(stcs_normal,
+                                              labels,
                                               src_normal,
-                                              mode='mean_flip',
+                                              mode='mean',
                                               return_generator=False)
 
 src_hyp = inverse_hyp['src']
-labelTsHyp = mne.extract_label_time_course(stcsHyp, labels, src_hyp,
-                                           mode='mean_flip',
+labelTsHyp = mne.extract_label_time_course(stcs_hyp,
+                                           labels,
+                                           src_hyp,
+                                           mode='mean',
                                            return_generator=False)
 
 # standardize TS's
-labelTsNormalRescaled = []
-for j in range(len(labelTsNormal)):
-    labelTsNormalRescaled += [rescale(labelTsNormal[j], epochs_normal.times,
-                                      baseline=(None, -0.7), mode="zscore")]
+# labelTsNormalRescaled = []
+# for j in range(len(labelTsNormal)):
+#     labelTsNormalRescaled += [rescale(labelTsNormal[j], epochs_normal.times,
+#                                       baseline=(None, -0.7), mode="zscore")]
 
-labelTsHypRescaled = []
-for j in range(len(labelTsHyp)):
-    labelTsHypRescaled += [rescale(labelTsHyp[j], epochs_hyp.times,
-                                   baseline=(None, -0.7), mode="zscore")]
+# labelTsHypRescaled = []
+# for j in range(len(labelTsHyp)):
+#     labelTsHypRescaled += [rescale(labelTsHyp[j], epochs_hyp.times,
+#                                    baseline=(None, -0.7), mode="zscore")]
 
 
-fromTime = np.argmax(stcsNormal[0].times == 0)
-toTime = np.argmax(stcsNormal[0].times == 0.5)
+# fromTime = np.argmax(stcs_normal[0].times == 0)
+# toTime = np.argmax(stcs_normal[0].times == 0.5)
 
-labelTsNormalRescaledCrop = []
-for j in range(len(labelTsNormal)):
-    labelTsNormalRescaledCrop += [labelTsNormalRescaled[j][:, fromTime:toTime]]
+# labelTsNormalRescaledCrop = []
+# for j in range(len(labelTsNormal)):
+# labelTsNormalRescaledCrop += [labelTsNormalRescaled[j][:, fromTime:toTime]]
 
-labelTsHypRescaledCrop = []
-for j in range(len(labelTsHyp)):
-    labelTsHypRescaledCrop += [labelTsHypRescaled[j][:, fromTime:toTime]]
+# labelTsHypRescaledCrop = []
+# for j in range(len(labelTsHyp)):
+#     labelTsHypRescaledCrop += [labelTsHypRescaled[j][:, fromTime:toTime]]
 
 
 # %%
 corrListNormal = []
 corrListHyp = []
 
-for j in range(len(labelTsNormalRescaledCrop)):
-    nits = TimeSeries(labelTsNormalRescaledCrop[j],
+for j in range(len(labelTsNormal)):
+    nits = TimeSeries(labelTsNormal[j],
                       sampling_rate=250)  # epochs_normal.info["sfreq"])
     nits.metadata["roi"] = labels_name
 
     corrListNormal += [CorrelationAnalyzer(nits)]
 
-for j in range(len(labelTsHypRescaledCrop)):
-    nits = TimeSeries(labelTsHypRescaledCrop[j],
+for j in range(len(labelTsHyp)):
+    nits = TimeSeries(labelTsHyp[j],
                       sampling_rate=250)  # epochs_normal.info["sfreq"])
     nits.metadata["roi"] = labels_name
 
@@ -158,10 +165,10 @@ for j in range(len(labelTsHypRescaledCrop)):
 
 corrMatrixNormal = np.empty([len(labels_name),
                             len(labels_name),
-                            len(labelTsNormalRescaledCrop)])
+                            len(labelTsNormal)])
 corrMatrixHyp = np.empty([len(labels_name),
                          len(labels_name),
-                         len(labelTsHypRescaledCrop)])
+                         len(labelTsHyp)])
 
 
 # compute average coherence &  Averaging on last dimension
@@ -197,7 +204,7 @@ nxHyp = []
 for j in range(binMatrixHyp.shape[2]):
     nxHyp += [nx.from_numpy_matrix(binMatrixHyp[:, :, j])]
 
-#%%
+#
 # eff_normal = np.empty(binMatrixNormal.shape[2])
 # for j, graph in enumerate(nxNormal):
 #     eff_normal[j] = bct.efficiency_bin(nx.to_numpy_matrix(graph))
@@ -257,7 +264,7 @@ results_deg = {"pval": pval, "obs_diff": obs_diff, "diffs": diffs,
 
 pickle.dump(results_deg,
             open(result_dir +
-                 "/network_connect_press_zscore_DKT_corr_0-05_resample_crop_deg.p",
+                 "/network_connect_press_zscore_DA_corr_0-05_resample_crop_deg.p",
                  "wb"))
 
 pval, obs_diff, diffs =\
@@ -269,5 +276,5 @@ results_trans = {"pval": pval, "obs_diff": obs_diff, "diffs": diffs,
 
 pickle.dump(results_trans,
             open(result_dir +
-                 "/network_connect_press_zscore_DKT_corr_0-05_resample_crop_trans.p",
+                 "/network_connect_press_zscore_DA_corr_0-05_resample_crop_trans.p",
                  "wb"))
