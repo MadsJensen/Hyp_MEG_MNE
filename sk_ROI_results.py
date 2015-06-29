@@ -77,14 +77,14 @@ labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
 
 # load Class csv file
 press_post_clf = load_result(
-    "p_results_DA_press_surf-normal_dSPM_0-05_LR_std_mean.csv")
+    "p_results_DA_press_surf-normal_MNE_0-05_LR_std_mean.csv")
 press_post_index =\
     press_post_clf[press_post_clf["rejected"] == True].index.get_values()
 print "Press POST\n", press_post_clf[press_post_clf["rejected"] == True]
 
 
 press_pre_clf = load_result(
-    "p_results_DA_press_surf-normal_dSPM_-02-0_LR_std_mean.csv")
+    "p_results_DA_press_surf-normal_MNE_-02-0_LR_std_mean.csv")
 press_pre_index =\
     press_pre_clf[press_pre_clf["rejected"] == True].index.get_values()
 print "Press PRE\n", press_pre_clf[press_pre_clf["rejected"] == True]
@@ -116,15 +116,15 @@ epochs_hyp = mne.read_epochs(epochs_fhyp)
 epo_normal = epochs_normal.copy()
 epo_hyp = epochs_hyp.copy()
 
-epochs_normal = epochs_normal["Tone"]
-epochs_hyp = epochs_hyp["Tone"]
+epochs_normal = epochs_normal["press"]
+epochs_hyp = epochs_hyp["press"]
 
 evoked_normal = epochs_normal.average()
 evoked_hyp = epochs_hyp.average()
 
 snr = 1.0  # Standard assumption for average data but using it for single trial
 lambda2 = 1.0 / snr ** 2
-method = "dSPM"
+method = "MNE"
 
 inverse_normal = read_inverse_operator(inverse_fnormal)
 inverse_hyp = read_inverse_operator(inverse_fhyp)
