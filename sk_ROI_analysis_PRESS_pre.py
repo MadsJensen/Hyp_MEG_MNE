@@ -15,6 +15,7 @@ from mne.minimum_norm import read_inverse_operator, apply_inverse_epochs
 # from mne.baseline import rescale
 from sklearn import preprocessing
 from sklearn.linear_model import LogisticRegression
+from sklean.lda import LDA
 from sklearn.cross_validation import (ShuffleSplit, permutation_test_score)
 
 # Setup paths and prepare raw data
@@ -39,6 +40,7 @@ result_dir = data_path + "/class_result"
 # setup clf
 n_splits = 10
 LR = LogisticRegression()
+lda = LDA()
 
 os.chdir(data_path)
 
@@ -56,7 +58,7 @@ epochs_hyp = epochs_hyp["press"]
 
 snr = 1.0  # Standard assumption for average data but using it for single trial
 lambda2 = 1.0 / snr ** 2
-method = "dSPM"
+method = "MNE"
 
 # Load data
 inverse_normal = read_inverse_operator(inverse_fnormal)
@@ -91,8 +93,8 @@ labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
 #                                     regexp="Bro",
 #                                     subjects_dir=subjects_dir)
 
-classifiers = [LR]
-clf_names = ["LR"]
+classifiers = [LDA]
+clf_names = ["LDA"]
 
 for h, clf in enumerate(classifiers):
     p_results = {}
@@ -159,9 +161,9 @@ for h, clf in enumerate(classifiers):
         p_results[label.name] = pvalue
 
     outfile_p_name = "p_results_DA_press_surf-normal_" +\
-        "dSPM_-02-0_%s_std_mean.csv" % clf_names[h]
+        "MNE_-02-0_%s_std_mean.csv" % clf_names[h]
     outfile_score_name = "score_results_DA_press_surf-normal_" +\
-        "dSPM_-02-0_%s_std_mean.csv" % clf_names[h]
+        "MNE_-02-0_%s_std_mean.csv" % clf_names[h]
 
     with open(outfile_p_name, "w") as outfile:
         writer = csv.writer(outfile)
