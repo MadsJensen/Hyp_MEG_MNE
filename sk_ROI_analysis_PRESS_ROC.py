@@ -10,7 +10,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.cross_validation import StratifiedShuffleSplit
 from sklearn.metrics import roc_curve, auc
 from scipy import interp
+from mne.stats import fdr_correction
 
+import pandas as pd
 import mne
 import os
 import socket
@@ -20,7 +22,38 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from sk_ROI_results import load_result
+
+def load_result(fname):
+    """
+    Keyword Arguments:
+    name -- the file to be loaded.
+        """
+
+    result_clf = pd.read_csv(
+        fname,
+        header=None)
+    result_clf.columns = ["ROI", "pval"]  # rename columns
+    result_clf = result_clf.sort("ROI")
+
+    res_score = pd.read_csv(
+        "score_" + fname[2:],
+        header=None)
+
+    result_clf["score"] = res_score[1]
+    result_clf["rejected"], result_clf["pval_corr"] =\
+        fdr_correction(result_clf["pval"])
+    result_clf.index = range(0, len(result_clf))
+
+    result_clf["rejected"], result_clf["pval_corr"] =\
+        fdr_correction(result_clf["pval"])
+
+    ROIs = [roi[:-3] for roi in result_clf.ROI]
+    hemi = [roi[-2:] for roi in result_clf.ROI]
+    result_clf["hemi"] = hemi
+    result_clf.ROI = ROIs
+
+    return result_clf
+
 
 # Setup paths and prepare raw data
 hostname = socket.gethostname()
