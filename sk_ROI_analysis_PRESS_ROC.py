@@ -153,4 +153,4 @@ for h, clf in enumerate(classifiers):
         plt.ylabel('True Positive Rate')
         plt.title('Receiver operating characteristic example')
         plt.legend(loc="lower right")
-        plt.savefig(label.name + "_MNE_press_pre.jpg")
+        plt.savefig(result_dir + label.name + "_MNE_press_pre.jpg")
