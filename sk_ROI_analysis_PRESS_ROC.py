@@ -1,16 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed May 21 15:21:02 2014
-
 @author: mje
 """
-
-import mne
-import os
-import socket
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 from mne.minimum_norm import read_inverse_operator, apply_inverse_epochs
 # from mne.baseline import rescale
@@ -19,6 +10,17 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.cross_validation import StratifiedShuffleSplit
 from sklearn.metrics import roc_curve, auc
 from scipy import interp
+
+import mne
+import os
+import socket
+import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sk_ROI_results import load_result
 
 # Setup paths and prepare raw data
 hostname = socket.gethostname()
@@ -93,6 +95,14 @@ labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
                                     subjects_dir=subjects_dir)
 labels_single = [labels[101]]
 
+# Load results from classification
+press_pre_clf = load_result(
+    "p_results_DA_press_surf-normal_MNE_0-05_LR_std_mean.csv")
+press_pre_index =\
+    press_pre_clf[press_pre_clf["rejected"] == True].index.get_values()
+press_pre_labels = [labels[index] for index in press_pre_index]
+
+
 # CLassifier
 classifiers = [LR]
 clf_names = ["LR"]
@@ -101,7 +111,7 @@ for h, clf in enumerate(classifiers):
     p_results = {}
     score_results = {}
     plt.figure()
-    for label in labels_single:
+    for label in press_pre_labels:
         labelTsNormal = mne.extract_label_time_course(stcs_normal,
                                                       labels=label,
                                                       src=src_normal,
