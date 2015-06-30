@@ -16,11 +16,8 @@ from mne.minimum_norm import read_inverse_operator, apply_inverse_epochs
 # from mne.baseline import rescale
 from sklearn import preprocessing
 from sklearn.linear_model import LogisticRegression
-from sklearn import svm
-from sklearn.naive_bayes import GaussianNB
 from sklearn.cross_validation import StratifiedShuffleSplit
 from sklearn.metrics import roc_curve, auc
-from sklearn.grid_search import GridSearchCV
 from scipy import interp
 
 # Setup paths and prepare raw data
@@ -45,8 +42,6 @@ result_dir = data_path + "/class_result"
 # setup clf
 n_folds = 10
 LR = LogisticRegression()
-svc = svm.SVC(probability=True)
-gnb = GaussianNB()
 
 Cs = np.logspace(-4, 4, 100)
 
@@ -93,18 +88,12 @@ stcs_hyp = apply_inverse_epochs(epochs_hyp, inverse_hyp,
 [stc.crop(-0.2, 0) for stc in stcs_hyp]
 
 label_dir = subjects_dir + "/subject_1/label/"
-
-
 labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
                                     regexp="[G|S]",
                                     subjects_dir=subjects_dir)
-
 labels_single = [labels[101]]
 
-
-tuned_parameters = [{"C": Cs}]
-
-
+# CLassifier
 classifiers = [LR]
 clf_names = ["LR"]
 
@@ -135,13 +124,6 @@ for h, clf in enumerate(classifiers):
         cv = StratifiedShuffleSplit(y, test_size=0.2)
         print "Working on: ", label.name
 
-        # grid = GridSearchCV(estimator=LR, param_grid={"C": Cs})
-        # grid.fit(X, y)
-        # print(grid)
-        # # summarize the results of the grid search
-        # print(grid.best_score_)
-        # print(grid.best_estimator_)
-
         mean_tpr = 0.0
         mean_fpr = np.linspace(0, 1, 100)
         all_tpr = []
@@ -171,4 +153,4 @@ for h, clf in enumerate(classifiers):
         plt.ylabel('True Positive Rate')
         plt.title('Receiver operating characteristic example')
         plt.legend(loc="lower right")
-        plt.show()
+        plt.savefig(label.name + "_MNE_press_pre.jpg")
