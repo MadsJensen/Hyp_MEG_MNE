@@ -53,14 +53,14 @@ forward = mne.read_forward_solution(fname_fwd, force_fixed=True,
 # read inverse operators
 inverse_operator_meg = read_inverse_operator(inverse_fnormal)
 
-# read label(s)
-# labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
-#                                     regexp="pariet",
-#                                     subjects_dir=subjects_dir)
 
-labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
+# labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
+#                                    subjects_dir=subjects_dir)
+
+label_dir = subjects_dir + "/subject_1/label/"
+labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
+                                    regexp="[G|S]",
                                     subjects_dir=subjects_dir)
-
 
 # regularisation parameter
 snr = 3.0
