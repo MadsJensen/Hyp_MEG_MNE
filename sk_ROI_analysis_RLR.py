@@ -170,7 +170,7 @@ for h, clf in enumerate(classifiers):
         X = X * 1e11
         X = preprocessing.scale(X)
         print "Working on: ", label.name
-        RLR.fit(X,y)
+        RLR.fit(X, y)
         plt.plot(RLR.scores_)
         plt.show()
         
