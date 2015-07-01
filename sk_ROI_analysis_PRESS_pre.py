@@ -13,7 +13,7 @@ import numpy as np
 
 from mne.minimum_norm import read_inverse_operator, apply_inverse_epochs
 # from mne.baseline import rescale
-from sklearn import preprocessing
+# from sklearn import preprocessing
 from sklearn.linear_model import LogisticRegression
 from sklearn.lda import LDA
 from sklearn.cross_validation import (ShuffleSplit, permutation_test_score)
@@ -58,7 +58,7 @@ epochs_hyp = epochs_hyp["press"]
 
 snr = 1.0  # Standard assumption for average data but using it for single trial
 lambda2 = 1.0 / snr ** 2
-method = "MNE"
+method = "dSPM"
 
 # Load data
 inverse_normal = read_inverse_operator(inverse_fnormal)
@@ -93,8 +93,8 @@ labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
 #                                     regexp="Bro",
 #                                     subjects_dir=subjects_dir)
 
-classifiers = [lda]
-clf_names = ["LDA"]
+classifiers = [LR]
+clf_names = ["LR"]
 
 for h, clf in enumerate(classifiers):
     p_results = {}
@@ -113,41 +113,13 @@ for h, clf in enumerate(classifiers):
                                                    mode='mean',
                                                    return_generator=False)
 
-        # labelTsNormalRescaled = []
-        # for j in range(len(labelTsNormal)):
-        #     labelTsNormalRescaled += [rescale(labelTsNormal[j],
-        #                                       stcs_normal[0].times,
-        #                                       baseline=(None, -0.7),
-        #                                       mode="zscore")]
-
-        # labelTsHypRescaled = []
-        # for j in range(len(labelTsHyp)):
-        #     labelTsHypRescaled += [rescale(labelTsHyp[j],
-        #                                    stcs_hyp[0].times,
-        #                                    baseline=(None, -0.7),
-        #                                    mode="zscore")]
-
-        # # find index for start and stop times
-        # from_time = np.abs(stcs_normal[0].times - 0).argmin()
-        # to_time = np.abs(stcs_normal[0].times - 0.5).argmin()
-
-        # labelTsNormalRescaledCrop = []
-        # for j in range(len(labelTsNormal)):
-        #     labelTsNormalRescaledCrop +=\
-        #         [labelTsNormalRescaled[j][:, from_time:to_time]]
-
-        # labelTsHypRescaledCrop = []
-        # for j in range(len(labelTsHyp)):
-        #     labelTsHypRescaledCrop +=\
-        #         [labelTsHypRescaled[j][:, from_time:to_time]]
-
         X = np.vstack([labelTsNormal, labelTsHyp])
         X = X[:, 0, :]
         y = np.concatenate([np.zeros(len(labelTsNormal)),
                             np.ones(len(labelTsHyp))])
 
         # X = X * 1e11
-        X_pre = preprocessing.scale(X)
+        # X_pre = preprocessing.scale(X)
         cv = ShuffleSplit(len(X), n_splits, test_size=0.2)
         print "Working on: ", label.name
 
@@ -161,9 +133,9 @@ for h, clf in enumerate(classifiers):
         p_results[label.name] = pvalue
 
     outfile_p_name = "p_results_DA_press_surf-normal_" +\
-        "MNE_-02-0_%s_std_mean.csv" % clf_names[h]
+        "dSPM_-02-0_%s_nostd_mean.csv" % clf_names[h]
     outfile_score_name = "score_results_DA_press_surf-normal_" +\
-        "MNE_-02-0_%s_std_mean.csv" % clf_names[h]
+        "dSPM_-02-0_%s_nostd_mean.csv" % clf_names[h]
 
     with open(outfile_p_name, "w") as outfile:
         writer = csv.writer(outfile)

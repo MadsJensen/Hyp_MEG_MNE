@@ -13,7 +13,7 @@ import numpy as np
 
 from mne.minimum_norm import read_inverse_operator, apply_inverse_epochs
 # from mne.baseline import rescale
-from sklearn import preprocessing
+# from sklearn import preprocessing
 from sklearn.linear_model import LogisticRegression
 from sklearn.cross_validation import (ShuffleSplit, permutation_test_score)
 
@@ -116,8 +116,8 @@ for h, clf in enumerate(classifiers):
         y = np.concatenate([np.zeros(len(labelTsNormal)),
                             np.ones(len(labelTsHyp))])
 
-        X = X * 1e11
-        X_pre = preprocessing.scale(X)
+        # X = X * 1e11
+        # X_pre = preprocessing.scale(X)
         cv = ShuffleSplit(len(X), n_splits, test_size=0.2)
         print "Working on: ", label.name
 
@@ -131,9 +131,9 @@ for h, clf in enumerate(classifiers):
         p_results[label.name] = pvalue
 
     outfile_p_name = "p_results_DA_tone_surf-normal_" +\
-        "dSPM_-05-0_%s_std_mean.csv" % clf_names[h]
+        "dSPM_-05-0_%s_nostd_mean.csv" % clf_names[h]
     outfile_score_name = "score_results_DA_tone_surf-normal_" +\
-        "dSPM_-05-0_%s_std_mean.csv" % clf_names[h]
+        "dSPM_-05-0_%s_nostd_mean.csv" % clf_names[h]
 
     with open(outfile_p_name, "w") as outfile:
         writer = csv.writer(outfile)
