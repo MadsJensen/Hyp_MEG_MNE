@@ -71,6 +71,8 @@ n_svd_comp = 1
 
 label = labels[30]
 
+# %%
+
 stc_psf_meg, _ = point_spread_function(inverse_operator_meg,
                                        forward, method=method,
                                        labels=[label],
@@ -90,8 +92,7 @@ fmax = stc_psf_meg.data[:, 0].max()
 fmid = fmax / 2.
 brain_meg = stc_psf_meg.plot(surface='inflated', hemi='both',
                              subjects_dir=subjects_dir,
-                             time_label=time_label, fmin=fmin,
-                             fmid=fmid, fmax=fmax,
+                             time_label=time_label,
                              figure=mlab.figure(size=(500, 500)))
 
 brain_meg.add_label(label, hemi="lh", borders=True)
@@ -129,8 +130,7 @@ fmax = stc_ctf_mne.data[:, 0].max()
 fmid = fmax / 2.
 brain_mne = stc_ctf_mne.plot(surface='inflated', hemi='both',
                              subjects_dir=subjects_dir,
-                             time_label=time_label, fmin=fmin,
-                             fmid=fmid, fmax=fmax,
+                             time_label=time_label, 
                              figure=mlab.figure(size=(500, 500)))
 
 brain_mne.add_label(label, hemi="lh", borders=True)
