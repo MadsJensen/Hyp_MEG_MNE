@@ -124,7 +124,6 @@ label_dir = subjects_dir + "/subject_1/label/"
 labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
                                     regexp="[G|S]",
                                     subjects_dir=subjects_dir)
-labels_single = [labels[26]]
 
 # Load results from classification
 press_pre_clf = load_result(
@@ -140,6 +139,9 @@ press_post_index =\
 press_post_labels = [labels[index] for index in press_post_index]
 
 
+labels_single = [press_post_labels[0]]
+
+
 # CLassifier
 classifiers = [RLR]
 clf_names = ["RLR"]
@@ -147,7 +149,7 @@ clf_names = ["RLR"]
 for h, clf in enumerate(classifiers):
     p_results = {}
     score_results = {}
-    for label in press_post_labels:
+    for label in labels_single:
         labelTsNormal = mne.extract_label_time_course(stcs_normal,
                                                       labels=label,
                                                       src=src_normal,

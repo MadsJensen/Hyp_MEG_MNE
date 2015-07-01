@@ -63,7 +63,7 @@ reject = dict(grad=4000e-13,  # T / m (gradiometers)
 # %%
 snr = 1.0  # Standard assumption for average data but using it for single trial
 lambda2 = 1.0 / snr ** 2
-method = "dSPM"
+method = "MNE"
 
 # Load data
 inverse_normal = read_inverse_operator(inverse_fnormal)
@@ -94,8 +94,11 @@ stcs_hyp = apply_inverse_epochs(epochs_hyp, inverse_hyp, lambda2,
 [stc.crop(0, 0.2) for stc in stcs_hyp]
 
 # Get labels from FreeSurfer cortical parcellation
-labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
-                                    regexp="Bro",
+# labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+#                                     regexp="Bro",
+#                                     subjects_dir=subjects_dir)
+
+labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
                                     subjects_dir=subjects_dir)
 labels_name = [label.name for label in labels]
 
@@ -138,6 +141,9 @@ labelTsHyp = mne.extract_label_time_course(stcs_hyp,
 # for j in range(len(labelTsHyp)):
 #     labelTsHypRescaledCrop += [labelTsHypRescaled[j][:, fromTime:toTime]]
 
+
+labelTsNormal = 1e11
+labelTsHyp = 1e11
 
 # %%
 corrListNormal = []

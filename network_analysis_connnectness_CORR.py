@@ -63,7 +63,7 @@ reject = dict(grad=4000e-13,  # T / m (gradiometers)
 # %%
 snr = 1.0  # Standard assumption for average data but using it for single trial
 lambda2 = 1.0 / snr ** 2
-method = "dSPM"
+method = "MNE"
 
 # Load data
 inverse_normal = read_inverse_operator(inverse_fnormal)
@@ -141,6 +141,9 @@ labelTsHyp = mne.extract_label_time_course(stcs_hyp,
 # for j in range(len(labelTsHyp)):
 #     labelTsHypRescaledCrop += [labelTsHypRescaled[j][:, fromTime:toTime]]
 
+
+labelTsNormal = 1e11
+labelTsHyp = 1e11
 
 # %%
 corrListNormal = []

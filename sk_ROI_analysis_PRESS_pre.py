@@ -15,7 +15,7 @@ from mne.minimum_norm import read_inverse_operator, apply_inverse_epochs
 # from mne.baseline import rescale
 from sklearn import preprocessing
 from sklearn.linear_model import LogisticRegression
-from sklean.lda import LDA
+from sklearn.lda import LDA
 from sklearn.cross_validation import (ShuffleSplit, permutation_test_score)
 
 # Setup paths and prepare raw data
@@ -93,7 +93,7 @@ labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
 #                                     regexp="Bro",
 #                                     subjects_dir=subjects_dir)
 
-classifiers = [LDA]
+classifiers = [lda]
 clf_names = ["LDA"]
 
 for h, clf in enumerate(classifiers):
