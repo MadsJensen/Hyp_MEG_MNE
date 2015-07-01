@@ -14,6 +14,7 @@ import mne
 import os
 import socket
 import numpy as np
+import pylab as plt
 
 
 def load_result(fname):
@@ -140,8 +141,8 @@ press_post_labels = [labels[index] for index in press_post_index]
 
 
 # CLassifier
-classifiers = [LR]
-clf_names = ["LR"]
+classifiers = [RLR]
+clf_names = ["RLR"]
 
 for h, clf in enumerate(classifiers):
     p_results = {}
@@ -167,3 +168,7 @@ for h, clf in enumerate(classifiers):
         X = X * 1e11
         X = preprocessing.scale(X)
         print "Working on: ", label.name
+        RLR.fit(X,y)
+        plt.plot(RLR.scores_)
+        plt.show()
+        
