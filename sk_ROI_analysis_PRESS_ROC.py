@@ -119,21 +119,27 @@ stcs_hyp = apply_inverse_epochs(epochs_hyp, inverse_hyp,
 [stc.resample(250) for stc in stcs_hyp]
 
 # Crop
-[stc.crop(-0.2, 0) for stc in stcs_normal]
-[stc.crop(-0.2, 0) for stc in stcs_hyp]
+[stc.crop(0, 0.5) for stc in stcs_normal]
+[stc.crop(0, 0.5) for stc in stcs_hyp]
 
 label_dir = subjects_dir + "/subject_1/label/"
 labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
                                     regexp="[G|S]",
                                     subjects_dir=subjects_dir)
-labels_single = [labels[101]]
+labels_single = [labels[26]]
 
 # Load results from classification
 press_pre_clf = load_result(
-    "p_results_DA_press_surf-normal_MNE_0-05_LR_std_mean.csv")
+    "p_results_DA_press_surf-normal_MNE_-02-0_LR_std_mean.csv")
 press_pre_index =\
     press_pre_clf[press_pre_clf["rejected"] == True].index.get_values()
 press_pre_labels = [labels[index] for index in press_pre_index]
+
+press_post_clf = load_result(
+    "p_results_DA_press_surf-normal_MNE_0-05_LR_std_mean.csv")
+press_post_index =\
+    press_post_clf[press_post_clf["rejected"] == True].index.get_values()
+press_post_labels = [labels[index] for index in press_post_index]
 
 
 # CLassifier
@@ -143,8 +149,7 @@ clf_names = ["LR"]
 for h, clf in enumerate(classifiers):
     p_results = {}
     score_results = {}
-    plt.figure()
-    for label in press_pre_labels:
+    for label in press_post_labels:
         labelTsNormal = mne.extract_label_time_course(stcs_normal,
                                                       labels=label,
                                                       src=src_normal,
@@ -170,6 +175,7 @@ for h, clf in enumerate(classifiers):
         mean_tpr = 0.0
         mean_fpr = np.linspace(0, 1, 100)
         all_tpr = []
+        plt.figure()
 
         # logistic = LogisticRegression(C=grid.best_params_["C"])
         for i, (train, test) in enumerate(cv):
@@ -196,4 +202,5 @@ for h, clf in enumerate(classifiers):
         plt.ylabel('True Positive Rate')
         plt.title('Receiver operating characteristic example')
         plt.legend(loc="lower right")
-        plt.savefig(result_dir + label.name + "_MNE_press_pre.jpg")
+        # FIXME: make sure plot is not plotting on top of each other
+#        plt.savefig(result_dir + label.name + "_MNE_press_pre.jpg")

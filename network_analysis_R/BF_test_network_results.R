@@ -11,7 +11,7 @@ library(BayesFactor)
 
 measures <- c("eff", "deg", "trans")
 bands = c("theta", "alpha", "beta", "gamma_low", "gamma_high")
-atlases <- c("DA")
+atlases <- c("BA")
 
 colum_names <- c("atlas", "measure", "band", "BF",
                  "mean_normal", "mean_hyp", "sd_normal", "sd_hyp")
@@ -71,7 +71,7 @@ result_df$condition = "Press"
 
 measures <- c("eff", "deg", "trans")
 bands = c("theta", "alpha", "beta", "gamma_low", "gamma_high")
-atlases <- c("DA")
+atlases <- c("BA")
 
 colum_names <- c("atlas", "measure", "band", "BF",
                  "mean_normal", "mean_hyp", "sd_normal", "sd_hyp")

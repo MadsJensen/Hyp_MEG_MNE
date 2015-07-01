@@ -173,4 +173,3 @@ for h, clf in enumerate(classifiers):
         RLR.fit(X, y)
         plt.plot(RLR.scores_)
         plt.show()
-        

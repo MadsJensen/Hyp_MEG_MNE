@@ -130,7 +130,7 @@ fmax = stc_ctf_mne.data[:, 0].max()
 fmid = fmax / 2.
 brain_mne = stc_ctf_mne.plot(surface='inflated', hemi='both',
                              subjects_dir=subjects_dir,
-                             time_label=time_label, 
+                             time_label=time_label,
                              figure=mlab.figure(size=(500, 500)))
 
 brain_mne.add_label(label, hemi="lh", borders=True)
