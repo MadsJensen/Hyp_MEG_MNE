@@ -182,30 +182,6 @@ for h, label in enumerate(tone_post_labels):
                                                mode='mean',
                                                return_generator=False)
 
-    # labelTsNormalRescaled = []
-    # for j in range(len(labelTsNormal)):
-    #     labelTsNormalRescaled += [rescale(labelTsNormal[j],
-    #                                       stcs_normal[0].times,
-    #                                       baseline=(None, -0.7),
-    #                                       mode="zscore")]
-
-    # labelTsHypRescaled = []
-    # for j in range(len(labelTsHyp)):
-    #     labelTsHypRescaled += [rescale(labelTsHyp[j],
-    #                                    stcs_hyp[0].times,
-    #                                    baseline=(None, -0.7),
-    #                                    mode="zscore")]
-
-    # labelTsNormalRescaledCrop = []
-    # for j in range(len(labelTsNormal)):
-    #     labelTsNormalRescaledCrop +=\
-    #         [labelTsNormalRescaled[j][:, from_time:to_time]]
-
-    # labelTsHypRescaledCrop = []
-    # for j in range(len(labelTsHyp)):
-    #     labelTsHypRescaledCrop +=\
-    #         [labelTsHypRescaled[j][:, from_time:to_time]]
-
     results_pd = []
     times = stcs_normal[0].times
 
