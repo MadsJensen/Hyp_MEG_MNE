@@ -1,14 +1,16 @@
-import cPickle as pickle
+# import cPickle as pickle
 import os
 import socket
 import numpy as np
 import matplotlib.pylab as plt
-
-# import matplotlib.pyplot as plt
 import mne
 # import numpy as np
 from mne.minimum_norm import (read_inverse_operator,
                               source_induced_power)
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.cross_validation import (StratifiedShuffleSplit,
+                                      permutation_test_score)
 
 
 def plot_tfr(data, times, frequencies, max_freq):
@@ -63,9 +65,6 @@ epochs_hyp = mne.read_epochs(epochs_fhyp)
 epochs_normal = epochs_normal["press"]
 epochs_hyp = epochs_hyp["press"]
 
-# labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
-#                                     regexp="Brodmann",
-#                                     subjects_dir=subjects_dir)
 label_dir = subjects_dir + "/subject_1/label/"
 labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
                                     regexp="[G|S]",
@@ -107,3 +106,20 @@ for j, label in enumerate(epochs_hyp):
         baseline_mode='percent', n_cycles=n_cycles, n_jobs=1)
 
     tfr_result[j + len(epochs_normal), :, :] = sip.mean(axis=0)
+
+
+n_splits = 10
+LR = LogisticRegression()
+
+X = np.reshape([tfr_result.shape[0], tfr_result.shape[1]*tfr_result[2]])
+y = np.concatenate([np.zeros(len(epochs_normal)),
+                    np.ones(len(epochs_hyp))])
+
+# X = X * 1e11
+# X_pre = preprocessing.scale(X)
+cv = StratifiedShuffleSplit(len(X), n_splits, test_size=0.2)
+
+score, permutation_scores, pvalue =\
+    permutation_test_score(
+        LR, X, y, scoring="accuracy",
+        cv=cv, n_permutations=5000)
