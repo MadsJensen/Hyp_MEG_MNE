@@ -1,4 +1,10 @@
 # Ignore all emacs backup files
+# emacs
 *~
+
+# python
 *.pyc
+
+# R
 .Rproj.user
+.Rhistory
