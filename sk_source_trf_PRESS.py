@@ -65,6 +65,9 @@ epochs_hyp = mne.read_epochs(epochs_fhyp)
 epochs_normal = epochs_normal["press"]
 epochs_hyp = epochs_hyp["press"]
 
+epochs_normal.resample(250)
+epochs_hyp.resample(250)
+
 label_dir = subjects_dir + "/subject_1/label/"
 labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
                                     regexp="[G|S]",
@@ -108,18 +111,25 @@ for j, label in enumerate(epochs_hyp):
     tfr_result[j + len(epochs_normal), :, :] = sip.mean(axis=0)
 
 
+times = epochs_normal.times
+
+from_time = np.argmax(epochs_normal.times==0)
+to_time = np.argmax(epochs_normal.times==0.5)
+
 n_splits = 10
 LR = LogisticRegression()
 
-X = np.reshape([tfr_result.shape[0], tfr_result.shape[1]*tfr_result[2]])
+tfr_crop = tfr_result[:, :, from_time:to_time]
+X = tfr_crop.reshape([tfr_crop.shape[0],
+                        tfr_crop.shape[1]*tfr_crop.shape[2]])                        
 y = np.concatenate([np.zeros(len(epochs_normal)),
                     np.ones(len(epochs_hyp))])
 
 # X = X * 1e11
 # X_pre = preprocessing.scale(X)
-cv = StratifiedShuffleSplit(len(X), n_splits, test_size=0.2)
+cv = StratifiedShuffleSplit(y, n_splits, test_size=0.2)
 
 score, permutation_scores, pvalue =\
     permutation_test_score(
-        LR, X, y, scoring="accuracy",
-        cv=cv, n_permutations=5000)
+        gnb, X, y, scoring="accuracy",
+        cv=cv, n_permutations=2000, verbose=True)
