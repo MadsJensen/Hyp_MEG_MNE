@@ -31,7 +31,6 @@ def plot_tfr(data, times, frequencies, max_freq):
     plt.colorbar()
 
 
-
 # Setup paths and prepare raw data
 hostname = socket.gethostname()
 
@@ -107,4 +106,4 @@ for j, label in enumerate(epochs_hyp):
         baseline=(-1, -0.7),
         baseline_mode='percent', n_cycles=n_cycles, n_jobs=1)
 
-    tfr_result[j + len(epochs_hyp), :, :] = sip.mean(axis=0)
+    tfr_result[j + len(epochs_normal), :, :] = sip.mean(axis=0)
