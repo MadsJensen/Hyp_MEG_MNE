@@ -102,13 +102,13 @@ for h, clf in enumerate(classifiers):
         labelTsNormal = mne.extract_label_time_course(stcs_normal,
                                                       labels=label,
                                                       src=src_normal,
-                                                      mode='mean',
+                                                      mode='mean_flip',
                                                       return_generator=False)
 
         labelTsHyp = mne.extract_label_time_course(stcs_hyp,
                                                    labels=label,
                                                    src=src_hyp,
-                                                   mode='mean',
+                                                   mode='mean_flip',
                                                    return_generator=False)
 
         X = np.vstack([labelTsNormal, labelTsHyp])
@@ -131,9 +131,9 @@ for h, clf in enumerate(classifiers):
         p_results[label.name] = pvalue
 
     outfile_p_name = "p_results_DA_tone_surf-normal_" +\
-        "dSPM_-05-0_%s_nostd_mean.csv" % clf_names[h]
+        "dSPM_-05-0_%s_nostd_mean_flip.csv" % clf_names[h]
     outfile_score_name = "score_results_DA_tone_surf-normal_" +\
-        "dSPM_-05-0_%s_nostd_mean.csv" % clf_names[h]
+        "dSPM_-05-0_%s_nostd_mean_flip.csv" % clf_names[h]
 
     with open(outfile_p_name, "w") as outfile:
         writer = csv.writer(outfile)
