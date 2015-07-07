@@ -25,7 +25,7 @@ elif hostname == "isis":
                 "Tone_task_MNE/"
     subjects_dir = "/scratch1/MINDLAB2013_18-MEG-HypnosisAnarchicHand/" + \
                    "fs_subjects_dir"
-    n_jobs = 2
+    n_jobs = 1
 else:
     raise RuntimeWarning('Unkwon host')
 
@@ -64,7 +64,7 @@ bands = dict(alpha=[9, 11], beta=[18, 22], gamme_low=[30, 48],
              gamma_high=[52, 88])
 
 stcs_normal = source_band_induced_power(epochs_normal, inverse_normal, bands,
-                                        n_cycles=4,
+                                        n_cycles=2,
                                         use_fft=False,
                                         n_jobs=n_jobs)
 
