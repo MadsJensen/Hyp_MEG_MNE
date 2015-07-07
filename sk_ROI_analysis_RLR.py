@@ -19,9 +19,8 @@ import pylab as plt
 
 def load_result(fname):
     """
-    Keyword Arguments:
-    name -- the file to be loaded.
-        """
+    fname : The file to be loaded.
+    """
 
     result_clf = pd.read_csv(
         fname,

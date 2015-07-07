@@ -99,7 +99,7 @@ for h, clf in enumerate(classifiers):
     p_results = {}
     score_results = {}
 
-    for label in label_single:
+    for label in labels:
         print "Working on: %s" % label.name
 
         tfr_result = np.empty([len(epochs_normal) + len(epochs_hyp),

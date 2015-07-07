@@ -74,7 +74,7 @@ stcs_hyp = apply_inverse_epochs(epochs_hyp, inverse_hyp,
                                 pick_ori="normal",
                                 return_generator=False)
 
-# Resample
+# Resampleµ
 [stc.resample(250) for stc in stcs_normal]
 [stc.resample(250) for stc in stcs_hyp]
 
