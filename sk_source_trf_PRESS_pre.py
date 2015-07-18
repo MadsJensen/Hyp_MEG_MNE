@@ -92,8 +92,8 @@ n_splits = 10
 LR = LogisticRegression()
 gnb = GaussianNB()
 
-classifiers = [LR]
-clf_names = ["LR"]
+classifiers = [gnb]
+clf_names = ["gnb"]
 
 for h, clf in enumerate(classifiers):
     p_results = {}
