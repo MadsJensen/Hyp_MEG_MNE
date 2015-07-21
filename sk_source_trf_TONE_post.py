@@ -92,8 +92,8 @@ n_splits = 10
 LR = LogisticRegression()
 gnb = GaussianNB()
 
-classifiers = [LR]
-clf_names = ["LR"]
+classifiers = [gnb]
+clf_names = ["gnb"]
 
 for h, clf in enumerate(classifiers):
     p_results = {}
@@ -159,7 +159,7 @@ for h, clf in enumerate(classifiers):
 
         score, permutation_scores, pvalue =\
             permutation_test_score(
-                gnb, X, y, scoring="accuracy",
+                clf, X, y, scoring="accuracy",
                 cv=cv, n_permutations=5000, verbose=True)
 
         score_results[label.name] = score
