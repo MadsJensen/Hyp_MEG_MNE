@@ -144,8 +144,8 @@ for h, clf in enumerate(classifiers):
 
             tfr_result[j + len(epochs_normal), :, :] = sip.mean(axis=0)
 
-        from_time = np.argmax(epochs_normal.times == -0.5)
-        to_time = np.argmax(epochs_normal.times == 0)
+        from_time = np.argmax(epochs_normal.times == 0)
+        to_time = np.argmax(epochs_normal.times == 0.2)
 
         times = epochs_normal.times[from_time:to_time]
 
@@ -160,15 +160,15 @@ for h, clf in enumerate(classifiers):
         score, permutation_scores, pvalue =\
             permutation_test_score(
                 gnb, X, y, scoring="accuracy",
-                cv=cv, n_permutations=50, verbose=True)
+                cv=cv, n_permutations=5000, verbose=True)
 
         score_results[label.name] = score
         p_results[label.name] = pvalue
 
         outfile_p_name = "p_results_DA_tone_TFR_" +\
-            "dSPM_-05-0_%s.csv" % clf_names[h]
+            "dSPM_0-02_%s.csv" % clf_names[h]
         outfile_score_name = "score_results_DA_tone_TFR_" +\
-            "dSPM_-05-0_%s.csv" % clf_names[h]
+            "dSPM_0-02_%s.csv" % clf_names[h]
 
         with open(outfile_p_name, "w") as outfile:
             writer = csv.writer(outfile)
