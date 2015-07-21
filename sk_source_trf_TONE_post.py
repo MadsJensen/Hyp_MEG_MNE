@@ -144,8 +144,8 @@ for h, clf in enumerate(classifiers):
 
             tfr_result[j + len(epochs_normal), :, :] = sip.mean(axis=0)
 
-        from_time = np.argmax(epochs_normal.times == 0)
-        to_time = np.argmax(epochs_normal.times == 0.2)
+        from_time = np.abs(epochs_normal[0].times - 0).argmin()
+        to_time = np.abs(epochs_normal[0].times - 0.2).argmin()
 
         times = epochs_normal.times[from_time:to_time]
 
