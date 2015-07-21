@@ -63,10 +63,23 @@ method = "dSPM"
 bands = dict(alpha=[9, 11], beta=[18, 22], gamme_low=[30, 48],
              gamma_high=[52, 88])
 
-stcs_normal = source_band_induced_power(epochs_normal, inverse_normal, bands,
-                                        n_cycles=2,
-                                        use_fft=False,
-                                        n_jobs=n_jobs)
+stcs_normal = []
+for j in range(len(epochs_normal)):
+    stcs_normal += [source_band_induced_power(epochs_normal[j],
+                                              inverse_normal,
+                                              bands,
+                                              n_cycles=2,
+                                              use_fft=False,
+                                              n_jobs=n_jobs)]
+
+stcs_hyp = []
+for j in range(len(epochs_hyp)):
+    stcs_hyp += [source_band_induced_power(epochs_hyp[j],
+                                           inverse_hyp,
+                                           bands,
+                                           n_cycles=2,
+                                           use_fft=False,
+                                           n_jobs=n_jobs)]
 
 
 # Classification setting
