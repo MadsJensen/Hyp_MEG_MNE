@@ -50,6 +50,7 @@ epochs_hyp = epochs_hyp["press"]
 epochs_normal.resample(250)
 epochs_hyp.resample(250)
 
+
 label_dir = subjects_dir + "/subject_1/label/"
 labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
                                     regexp="[G|S]",
