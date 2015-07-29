@@ -118,8 +118,8 @@ for h in range(len(bands)):
     p_results = {}
     score_results = {}
 
-    stcs_normal = [stc[band.key()[]] for stc in stcs_normal]
-    stcs_hyp = [stc[band.key()[]] for stc in stcs_hyp]
+    stcs_normal = [stc[band.key()[h]] for stc in stcs_normal]
+    stcs_hyp = [stc[band.key()[h]] for stc in stcs_hyp]
 
     for label in labels:
         labelTsNormal = mne.extract_label_time_course(stcs_normal,
