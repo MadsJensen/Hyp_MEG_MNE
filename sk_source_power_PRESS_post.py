@@ -88,44 +88,44 @@ for h in range(len(bands)):
                                                   baseline_mode="zscore",
                                                   n_jobs=n_jobs)]
 
-    stcs_hyp = []
-    for j in range(len(epochs_hyp)):
-        print "\n*********************"
-        print "working on %d of %d" % (j+1, len(epochs_hyp))
-        print "*********************\n"
+stcs_hyp = []
+for j in range(len(epochs_hyp)):
+    print "\n*********************"
+    print "working on %d of %d" % (j+1, len(epochs_hyp))
+    print "*********************\n"
 
-        stcs_hyp += [source_band_induced_power(epochs_hyp[j],
-                                               inverse_hyp,
-                                               band,
-                                               n_cycles=2,
-                                               use_fft=False,
-                                               baseline=(None, -0.7),
-                                               baseline_mode="zscore",
-                                               n_jobs=n_jobs)]
+    stcs_hyp += [source_band_induced_power(epochs_hyp[j],
+                                           inverse_hyp,
+                                           band,
+                                           n_cycles=2,
+                                           use_fft=False,
+                                           baseline=(None, -0.7),
+                                           baseline_mode="zscore",
+                                           n_jobs=n_jobs)]
 
-    [stc[band.key()[h]].crop(0, 0.5) for stc in stcs_normal]
-    [stc[band.key()[h]].crop(0, 0.5) for stc in stcs_hyp]
+[stc[band.keys()[h]].crop(0, 0.5) for stc in stcs_normal]
+[stc[band.keys()[h]].crop(0, 0.5) for stc in stcs_hyp]
 
-    # Classification setting
-    n_splits = 10
-    LR = LogisticRegression()
-    gnb = GaussianNB()
+# Classification setting
+n_splits = 10
+LR = LogisticRegression()
+gnb = GaussianNB()
 
-    clf = gnb
-    clf_names = ["GNB"]
+clf = gnb
+clf_names = ["GNB"]
 
-    p_results = {}
-    score_results = {}
+p_results = {}
+score_results = {}
 
-    stcs_normal = [stc[band.key()[h]] for stc in stcs_normal]
-    stcs_hyp = [stc[band.key()[h]] for stc in stcs_hyp]
+stcs_normal = [stc[band.key()[h]] for stc in stcs_normal]
+stcs_hyp = [stc[band.key()[h]] for stc in stcs_hyp]
 
-    for label in labels:
-        labelTsNormal = mne.extract_label_time_course(stcs_normal,
-                                                      labels=label,
-                                                      src=src_normal,
-                                                      mode='mean_flip',
-                                                      return_generator=False)
+for label in labels:
+    labelTsNormal = mne.extract_label_time_course(stcs_normal,
+                                                  labels=label,
+                                                  src=src_normal,
+                                                  mode='mean_flip',
+                                                  return_generator=False)
 
         labelTsHyp = mne.extract_label_time_course(stcs_hyp,
                                                    labels=label,
