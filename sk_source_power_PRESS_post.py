@@ -70,7 +70,7 @@ bands = dict(alpha=[8, 13], beta=[13, 30], gamme_low=[30, 48],
              gamma_high=[52, 88])
 
 
-for h in len(range(bands)):
+for h in range(len(bands)):
     band = {bands.keys()[h]: bands.values()[h]}
 
     stcs_normal = []
@@ -118,8 +118,8 @@ for h in len(range(bands)):
     p_results = {}
     score_results = {}
 
-    stcs_normal = [stc["alpha"] for stc in stcs_normal]
-    stcs_hyp = [stc["alpha"] for stc in stcs_hyp]
+    stcs_normal = [stc[band.key()[]] for stc in stcs_normal]
+    stcs_hyp = [stc[band.key()[]] for stc in stcs_hyp]
 
     for label in labels:
         labelTsNormal = mne.extract_label_time_course(stcs_normal,
@@ -142,7 +142,7 @@ for h in len(range(bands)):
         # X = X * 1e11
         X_pre = preprocessing.scale(X)
         cv = StratifiedShuffleSplit(y, n_splits)
-        print "Working on: ", label.name
+        print "Working on: %s in band: " % (label.name, bands.keys()[h])
 
         score, permutation_scores, pvalue =\
             permutation_test_score(
@@ -153,10 +153,10 @@ for h in len(range(bands)):
         score_results[label.name] = score
         p_results[label.name] = pvalue
 
-        outfile_p_name = "p_results_DA_press_power_" +\
-            "dSPM_0-05_%s_nostd_mean_flip.csv" % clf_names[0]
-        outfile_score_name = "score_results_DA_press_power_" +\
-            "dSPM_0-05_%s_nostd_mean_flip.csv" % clf_names[0]
+        outfile_p_name = "p_results_DA_press_power_%s" +\
+            "MNE_0-05_%s_std_mean_flip.csv" % (bands.keys()[h], clf_names[0])
+        outfile_score_name = "score_results_DA_press_power_%s" +\
+            "MNE_0-05_%s_std_mean_flip.csv" % (bands.keys()[h], clf_names[0])
 
         with open(outfile_p_name, "w") as outfile:
             writer = csv.writer(outfile)
