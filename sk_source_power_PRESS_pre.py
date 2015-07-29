@@ -111,13 +111,16 @@ n_splits = 10
 LR = LogisticRegression()
 gnb = GaussianNB()
 
-clf = LR
-clf_names = ["LR"]
+clf = gnb
+clf_names = ["GNB"]
 
 p_results = {}
 score_results = {}
 
-for label in label_single:
+stcs_normal = [stc["alpha"] for stc in stcs_normal]
+stcs_hyp = [stc["alpha"] for stc in stcs_hyp]
+
+for label in labels:
     labelTsNormal = mne.extract_label_time_course(stcs_normal,
                                                   labels=label,
                                                   src=src_normal,
