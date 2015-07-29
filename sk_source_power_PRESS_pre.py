@@ -69,20 +69,30 @@ bands = dict(alpha=[9, 11], beta=[18, 22], gamme_low=[30, 48],
 
 stcs_normal = []
 for j in range(len(epochs_normal)):
+    print "*********************\n"
+    print "working on %d of %d\n"  %(j, len(epochs_normal))
+    print "*********************"
+    
     stcs_normal += [source_band_induced_power(epochs_normal[j],
                                               inverse_normal,
                                               bands,
+                                              label=label_single[0],
                                               n_cycles=2,
                                               use_fft=False,
+                                              baseline=(None, -0.7),
+                                              baseline_mode="zscore",
                                               n_jobs=n_jobs)]
 
 stcs_hyp = []
 for j in range(len(epochs_hyp)):
+    print "working on %d of %d"  %(j, len(epochs_hyp))
     stcs_hyp += [source_band_induced_power(epochs_hyp[j],
                                            inverse_hyp,
                                            bands,
                                            n_cycles=2,
                                            use_fft=False,
+                                           baseline=(None, -0.7),
+                                           baseline_mode="zscore",
                                            n_jobs=n_jobs)]
 
 
