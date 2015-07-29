@@ -1,8 +1,8 @@
 """
 Created on Wed June 20 2015
-
 @author: mje
 """
+
 import os
 import socket
 import numpy as np
@@ -77,7 +77,7 @@ for h in range(len(bands)):
     for j in range(len(epochs_normal)):
         print "\n*********************"
         print "working on %d of %d" % (j+1, len(epochs_normal))
-        print "\n*********************"
+        print "*********************\n"
 
         stcs_normal += [source_band_induced_power(epochs_normal[j],
                                                   inverse_normal,
@@ -92,7 +92,7 @@ for h in range(len(bands)):
     for j in range(len(epochs_hyp)):
         print "\n*********************"
         print "working on %d of %d" % (j+1, len(epochs_hyp))
-        print "\n*********************"
+        print "*********************\n"
 
         stcs_hyp += [source_band_induced_power(epochs_hyp[j],
                                                inverse_hyp,
@@ -103,9 +103,8 @@ for h in range(len(bands)):
                                                baseline_mode="zscore",
                                                n_jobs=n_jobs)]
 
-
-    [stc["alpha"].crop(0, 0.5) for stc in stcs_normal]
-    [stc["alpha"].crop(0, 0.5) for stc in stcs_hyp]
+    [stc[band.key()[h]].crop(0, 0.5) for stc in stcs_normal]
+    [stc[band.key()[h]].crop(0, 0.5) for stc in stcs_hyp]
 
     # Classification setting
     n_splits = 10
