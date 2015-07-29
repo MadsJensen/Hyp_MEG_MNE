@@ -67,16 +67,17 @@ method = "dSPM"
 bands = dict(alpha=[9, 11], beta=[18, 22], gamme_low=[30, 48],
              gamma_high=[52, 88])
 
+band = {bands.keys()[0]: bands.values()[0]}
+
 stcs_normal = []
 for j in range(len(epochs_normal)):
     print "*********************\n"
-    print "working on %d of %d\n"  %(j, len(epochs_normal))
+    print "working on %d of %d\n" % (j, len(epochs_normal))
     print "*********************"
-    
+
     stcs_normal += [source_band_induced_power(epochs_normal[j],
                                               inverse_normal,
-                                              bands,
-                                              label=label_single[0],
+                                              band,
                                               n_cycles=2,
                                               use_fft=False,
                                               baseline=(None, -0.7),
@@ -85,10 +86,13 @@ for j in range(len(epochs_normal)):
 
 stcs_hyp = []
 for j in range(len(epochs_hyp)):
-    print "working on %d of %d"  %(j, len(epochs_hyp))
+    print "*********************\n"
+    print "working on %d of %d" % (j, len(epochs_hyp))
+    print "*********************\n"
+
     stcs_hyp += [source_band_induced_power(epochs_hyp[j],
                                            inverse_hyp,
-                                           bands,
+                                           band,
                                            n_cycles=2,
                                            use_fft=False,
                                            baseline=(None, -0.7),
