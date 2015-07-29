@@ -27,7 +27,7 @@ elif hostname == "isis":
                    "fs_subjects_dir"
     n_jobs = 1
 else:
-    raise RuntimeWarning('Unkwon host')
+    raise RuntimeWarning('Unknown host')
 
 # change dir to save files the rigth place
 os.chdir(data_path)
