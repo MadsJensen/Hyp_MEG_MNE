@@ -145,7 +145,7 @@ for h in range(len(bands)):
         # X = X * 1e11
         X_pre = preprocessing.scale(X)
         cv = StratifiedShuffleSplit(y, n_splits)
-        print "Working on: %s in band: " % (label.name, bands.keys()[h])
+        print "Working on: %s in band: %s" % (label.name, bands.keys()[h])
 
         score, permutation_scores, pvalue =\
             permutation_test_score(
