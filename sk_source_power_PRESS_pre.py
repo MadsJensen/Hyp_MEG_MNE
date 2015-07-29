@@ -152,20 +152,17 @@ for label in labels:
     score_results[label.name] = score
     p_results[label.name] = pvalue
 
-# score_results[label.name] = score
-#     p_results[label.name] = pvalue
-#
-#     outfile_p_name = "p_results_DA_press_TFR_" +\
-#         "dSPM_-02-0_%s_nostd_mean_flip.csv" % clf_names[h]
-#     outfile_score_name = "score_results_DA_press_TFR_" +\
-#         "dSPM_-02-0_%s_nostd_mean_flip.csv" % clf_names[h]
-#
-#     with open(outfile_p_name, "w") as outfile:
-#         writer = csv.writer(outfile)
-#         for key, val in p_results.items():
-#             writer.writerow([key, val])
-#
-#     with open(outfile_score_name, "w") as outfile:
-#         writer = csv.writer(outfile)
-#         for key, val in score_results.items():
-#             writer.writerow([key, val])
+    outfile_p_name = "p_results_DA_press_power_" +\
+        "dSPM_-02-0_%s_nostd_mean_flip.csv" % clf_names[0]
+    outfile_score_name = "score_results_DA_press_power_" +\
+        "dSPM_-02-0_%s_nostd_mean_flip.csv" % clf_names[0]
+
+    with open(outfile_p_name, "w") as outfile:
+        writer = csv.writer(outfile)
+        for key, val in p_results.items():
+            writer.writerow([key, val])
+
+    with open(outfile_score_name, "w") as outfile:
+        writer = csv.writer(outfile)
+        for key, val in score_results.items():
+            writer.writerow([key, val])
