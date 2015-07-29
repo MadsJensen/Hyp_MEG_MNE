@@ -103,21 +103,21 @@ for j in range(len(epochs_hyp)):
                                            n_jobs=n_jobs)]
 
 
-[stc.crop(-0.2, 0) for stc in stcs_normal]
-[stc.crop(-0.2, 0) for stc in stcs_hyp]
+[stc["alpha"].crop(-0.2, 0) for stc in stcs_normal]
+[stc["alpha"].crop(-0.2, 0) for stc in stcs_hyp]
 
 # Classification setting
 n_splits = 10
 LR = LogisticRegression()
 gnb = GaussianNB()
 
-clf = [LR]
+clf = LR
 clf_names = ["LR"]
 
 p_results = {}
 score_results = {}
 
-for label in labels:
+for label in label_single:
     labelTsNormal = mne.extract_label_time_course(stcs_normal,
                                                   labels=label,
                                                   src=src_normal,
