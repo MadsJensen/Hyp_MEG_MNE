@@ -15,6 +15,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.cross_validation import (StratifiedShuffleSplit,
                                       permutation_test_score)
+from sklearn import preprocessing
 
 # Setup paths and prepare raw data
 hostname = socket.gethostname()
@@ -53,6 +54,8 @@ epochs_hyp = epochs_hyp["press"]
 epochs_normal.resample(250)
 epochs_hyp.resample(250)
 
+src_normal = inverse_normal['src']
+src_hyp = inverse_hyp['src']
 
 label_dir = subjects_dir + "/subject_1/label/"
 labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
@@ -63,7 +66,7 @@ label_single = [labels[3]]
 #
 snr = 1.0  # Standard assumption for average data but using it for single trial
 lambda2 = 1.0 / snr ** 2
-method = "dSPM"
+method = "MNE"
 bands = dict(alpha=[9, 11], beta=[18, 22], gamme_low=[30, 48],
              gamma_high=[52, 88])
 
@@ -71,9 +74,9 @@ band = {bands.keys()[0]: bands.values()[0]}
 
 stcs_normal = []
 for j in range(len(epochs_normal)):
-    print "*********************\n"
-    print "working on %d of %d\n" % (j, len(epochs_normal))
-    print "*********************"
+    print "\n*********************"
+    print "working on %d of %d" % (j+1, len(epochs_normal))
+    print "\n*********************"
 
     stcs_normal += [source_band_induced_power(epochs_normal[j],
                                               inverse_normal,
@@ -86,9 +89,9 @@ for j in range(len(epochs_normal)):
 
 stcs_hyp = []
 for j in range(len(epochs_hyp)):
-    print "*********************\n"
-    print "working on %d of %d" % (j, len(epochs_hyp))
-    print "*********************\n"
+    print "\n*********************"
+    print "working on %d of %d" % (j+1, len(epochs_hyp))
+    print "\n*********************"
 
     stcs_hyp += [source_band_induced_power(epochs_hyp[j],
                                            inverse_hyp,
@@ -100,13 +103,52 @@ for j in range(len(epochs_hyp)):
                                            n_jobs=n_jobs)]
 
 
+[stc.crop(-0.2, 0) for stc in stcs_normal]
+[stc.crop(-0.2, 0) for stc in stcs_hyp]
+
 # Classification setting
 n_splits = 10
 LR = LogisticRegression()
 gnb = GaussianNB()
 
-classifiers = [LR]
+clf = [LR]
 clf_names = ["LR"]
+
+p_results = {}
+score_results = {}
+
+for label in labels:
+    labelTsNormal = mne.extract_label_time_course(stcs_normal,
+                                                  labels=label,
+                                                  src=src_normal,
+                                                  mode='mean_flip',
+                                                  return_generator=False)
+
+    labelTsHyp = mne.extract_label_time_course(stcs_hyp,
+                                               labels=label,
+                                               src=src_hyp,
+                                               mode='mean_flip',
+                                               return_generator=False)
+
+    X = np.vstack([labelTsNormal, labelTsHyp])
+    X = X[:, 0, :]
+    y = np.concatenate([np.zeros(len(labelTsNormal)),
+                        np.ones(len(labelTsHyp))])
+
+    # X = X * 1e11
+    X_pre = preprocessing.scale(X)
+    cv = StratifiedShuffleSplit(y, n_splits)
+    print "Working on: ", label.name
+
+    score, permutation_scores, pvalue =\
+        permutation_test_score(
+            clf, X_pre, y, scoring="accuracy",
+            cv=cv, n_permutations=5000,
+            n_jobs=n_jobs)
+
+    score_results[label.name] = score
+    p_results[label.name] = pvalue
+
 # score_results[label.name] = score
 #     p_results[label.name] = pvalue
 #
