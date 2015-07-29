@@ -157,9 +157,9 @@ for h in range(len(bands)):
         p_results[label.name] = pvalue
 
         outfile_p_name = "p_results_DA_press_power_%s" +\
-            "MNE_0-05_%s_std_mean_flip.csv" % (bands.keys()[h], clf_names[0])
+            "MNE_0-05_%s_std_mean_flip.csv" % (band.keys()[h], clf_names[0])
         outfile_score_name = "score_results_DA_press_power_%s" +\
-            "MNE_0-05_%s_std_mean_flip.csv" % (bands.keys()[h], clf_names[0])
+            "MNE_0-05_%s_std_mean_flip.csv" % (band.keys()[h], clf_names[0])
 
         with open(outfile_p_name, "w") as outfile:
             writer = csv.writer(outfile)
