@@ -107,8 +107,8 @@ for h in range(len(bands)):
                                                baseline_mode="zscore",
                                                n_jobs=n_jobs)]
 
-    [stc[band.keys()[h]].crop(0, 0.5) for stc in stcs_normal]
-    [stc[band.keys()[h]].crop(0, 0.5) for stc in stcs_hyp]
+    [stc[band.keys()[0]].crop(0, 0.5) for stc in stcs_normal]
+    [stc[band.keys()[0]].crop(0, 0.5) for stc in stcs_hyp]
 
     # Classification setting
     n_splits = 10
@@ -121,8 +121,8 @@ for h in range(len(bands)):
     p_results = {}
     score_results = {}
 
-    stcs_normal = [stc[band.keys()[h]] for stc in stcs_normal]
-    stcs_hyp = [stc[band.keys()[h]] for stc in stcs_hyp]
+    stcs_normal = [stc[band.keys()[0]] for stc in stcs_normal]
+    stcs_hyp = [stc[band.keys()[0]] for stc in stcs_hyp]
 
     for label in labels:
         labelTsNormal = mne.extract_label_time_course(stcs_normal,
@@ -145,7 +145,7 @@ for h in range(len(bands)):
         # X = X * 1e11
         X_pre = preprocessing.scale(X)
         cv = StratifiedShuffleSplit(y, n_splits)
-        print "Working on: %s in band: %s" % (label.name, bands.keys()[h])
+        print "Working on: %s in band: %s" % (label.name, band.keys()[0])
 
         score, permutation_scores, pvalue =\
             permutation_test_score(
@@ -156,10 +156,10 @@ for h in range(len(bands)):
         score_results[label.name] = score
         p_results[label.name] = pvalue
 
-        outfile_p_name = "p_results_DA_press_power_%s" +\
-            "MNE_0-05_%s_std_mean_flip.csv" % (band.keys()[h], clf_names[0])
-        outfile_score_name = "score_results_DA_press_power_%s" +\
-            "MNE_0-05_%s_std_mean_flip.csv" % (band.keys()[h], clf_names[0])
+        outfile_p_name = "p_results_DA_press_power_%s_" +\
+            "MNE_0-05_%s_std_mean_flip.csv" % (band.keys()[0], clf_names[0])
+        outfile_score_name = "score_results_DA_press_power_%s_" +\
+            "MNE_0-05_%s_std_mean_flip.csv" % (band.keys()[0], clf_names[0])
 
         with open(outfile_p_name, "w") as outfile:
             writer = csv.writer(outfile)
