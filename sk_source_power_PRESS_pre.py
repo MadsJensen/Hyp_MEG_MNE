@@ -1,10 +1,13 @@
-# import cPickle as pickle
+"""
+Created on Wed June 20 2015
+
+@author: mje
+"""
 import os
 import socket
 import numpy as np
 import mne
 import csv
-# import numpy as np
 from mne.minimum_norm import (read_inverse_operator,
                               source_band_induced_power)
 
