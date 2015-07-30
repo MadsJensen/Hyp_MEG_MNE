@@ -120,8 +120,8 @@ for h in range(len(bands)):
     LR = LogisticRegression()
     gnb = GaussianNB()
 
-    clf = gnb
-    clf_names = ["GNB"]
+    clf = LR
+    clf_names = ["LR"]
 
     p_results = {}
     score_results = {}
