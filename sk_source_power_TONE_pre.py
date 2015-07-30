@@ -16,7 +16,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.cross_validation import (StratifiedShuffleSplit,
                                       permutation_test_score)
-from sklearn import preprocessing
+# from sklearn import preprocessing
 
 # Setup paths and prepare raw data
 hostname = socket.gethostname()
@@ -146,13 +146,13 @@ for h in range(len(bands)):
                             np.ones(len(labelTsHyp))])
 
         # X = X * 1e11
-        X_pre = preprocessing.scale(X)
+        # X_pre = prepro;cessing.scale(X)
         cv = StratifiedShuffleSplit(y, n_splits)
         print "Working on: %s in band: %s" % (label.name, band.keys()[0])
 
         score, permutation_scores, pvalue =\
             permutation_test_score(
-                clf, X_pre, y, scoring="accuracy",
+                clf, X, y, scoring="accuracy",
                 cv=cv, n_permutations=5000,
                 n_jobs=n_jobs)
 
@@ -160,11 +160,11 @@ for h in range(len(bands)):
         p_results[label.name] = pvalue
 
         outfile_p_name = "p_results_DA_tone_power" +\
-            "_%s_MNE_-05-0_%s_std_mean_flip.csv" % (band.keys()[0],
-                                                    clf_names[0])
+            "_%s_MNE_-05-0_%s_nostd_mean_flip.csv" % (band.keys()[0],
+                                                      clf_names[0])
         outfile_score_name = "score_results_DA_tone_power" +\
-            "_%s_MNE_-05-0_%s_std_mean_flip.csv" % (band.keys()[0],
-                                                    clf_names[0])
+            "_%s_MNE_-05-0_%s_nostd_mean_flip.csv" % (band.keys()[0],
+                                                      clf_names[0])
 
         with open(outfile_p_name, "w") as outfile:
             writer = csv.writer(outfile)
