@@ -66,7 +66,7 @@ labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
 snr = 1.0  # Standard assumption for average data but using it for single trial
 lambda2 = 1.0 / snr ** 2
 method = "MNE"
-bands = dict(alpha=[8, 13], beta=[13, 30], gamme_low=[30, 48],
+bands = dict(alpha=[8, 13], beta=[13, 30], gamma_low=[30, 48],
              gamma_high=[52, 88])
 
 
@@ -157,9 +157,11 @@ for h in range(len(bands)):
         p_results[label.name] = pvalue
 
         outfile_p_name = "p_results_DA_press_power" +\
-            "_%s_MNE_0-05_%s_std_mean_flip.csv" % (band.keys()[0], clf_names[0])
+            "_%s_MNE_0-05_%s_std_mean_flip.csv" % (band.keys()[0],
+                                                   clf_names[0])
         outfile_score_name = "score_results_DA_press_power" +\
-            "_%s_MNE_0-05_%s_std_mean_flip.csv" % (band.keys()[0], clf_names[0])
+            "_%s_MNE_0-05_%s_std_mean_flip.csv" % (band.keys()[0],
+                                                   clf_names[0])
 
         with open(outfile_p_name, "w") as outfile:
             writer = csv.writer(outfile)
