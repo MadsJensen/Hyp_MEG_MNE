@@ -16,7 +16,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.cross_validation import (StratifiedShuffleSplit,
                                       permutation_test_score)
-from sklearn import preprocessing
+# from sklearn import preprocessing
 
 # Setup paths and prepare raw data
 hostname = socket.gethostname()
@@ -59,10 +59,12 @@ src_normal = inverse_normal['src']
 src_hyp = inverse_hyp['src']
 
 label_dir = subjects_dir + "/subject_1/label/"
-labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
-                                    regexp="[G|S]",
+# labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
+#                                     regexp="[G|S]",
+#                                     subjects_dir=subjects_dir)
+labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+                                    regexp="Bro",
                                     subjects_dir=subjects_dir)
-label_single = [labels[3]]
 
 #
 snr = 1.0  # Standard assumption for average data but using it for single trial
@@ -146,25 +148,25 @@ for h in range(len(bands)):
                             np.ones(len(labelTsHyp))])
 
         # X = X * 1e11
-        X_pre = preprocessing.scale(X)
+        # X_pre = preprocessing.scale(X)
         cv = StratifiedShuffleSplit(y, n_splits)
         print "Working on: %s in band: %s" % (label.name, band.keys()[0])
 
         score, permutation_scores, pvalue =\
             permutation_test_score(
-                clf, X_pre, y, scoring="accuracy",
+                clf, X, y, scoring="accuracy",
                 cv=cv, n_permutations=5000,
                 n_jobs=n_jobs)
 
         score_results[label.name] = score
         p_results[label.name] = pvalue
 
-        outfile_p_name = "p_results_DA_press_power" +\
-            "_%s_MNE_-02-0_%s_std_mean_flip.csv" % (band.keys()[0],
-                                                    clf_names[0])
-        outfile_score_name = "score_results_DA_press_power" +\
-            "_%s_MNE_-02-0_%s_std_mean_flip.csv" % (band.keys()[0],
-                                                    clf_names[0])
+        outfile_p_name = "p_results_BA_press_power" +\
+            "_%s_MNE_-02-0_%s_nostd_mean_flip.csv" % (band.keys()[0],
+                                                      clf_names[0])
+        outfile_score_name = "score_results_BA_press_power" +\
+            "_%s_MNE_-02-0_%s_nostd_mean_flip.csv" % (band.keys()[0],
+                                                      clf_names[0])
 
         with open(outfile_p_name, "w") as outfile:
             writer = csv.writer(outfile)
