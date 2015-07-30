@@ -1,5 +1,5 @@
-
-ipython sk_source_trf_PRESS_pre.py
-ipython sk_source_trf_TONE_post.py
-ipython sk_source_trf_PRESS_post.py
-ipython sk_source_trf_TONE_pre.py
+# Run each file in serial
+ipython sk_source_power_PRESS_pre.py
+ipython sk_source_power_TONE_post.py
+ipython sk_source_power_PRESS_post.py
+ipython sk_source_powre_TONE_pre.py
