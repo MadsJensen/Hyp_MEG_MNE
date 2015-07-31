@@ -58,10 +58,12 @@ src_normal = inverse_normal['src']
 src_hyp = inverse_hyp['src']
 
 label_dir = subjects_dir + "/subject_1/label/"
-labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
-                                    regexp="[G|S]",
+# labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
+#                                     regexp="[G|S]",
+#                                     subjects_dir=subjects_dir)
+labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+                                    regexp="Bro",
                                     subjects_dir=subjects_dir)
-
 #
 snr = 1.0  # Standard assumption for average data but using it for single trial
 lambda2 = 1.0 / snr ** 2
