@@ -161,10 +161,10 @@ for h in range(len(bands)):
         score_results[label.name] = score
         p_results[label.name] = pvalue
 
-        outfile_p_name = "p_results_DA_tone_power" +\
+        outfile_p_name = "p_results_BA_tone_power" +\
             "_%s_MNE_0-02_%s_nostd_mean_flip.csv" % (band.keys()[0],
                                                      clf_names[0])
-        outfile_score_name = "score_results_DA_tone_power" +\
+        outfile_score_name = "score_results_BA_tone_power" +\
             "_%s_MNE_0-02_%s_nostd_mean_flip.csv" % (band.keys()[0],
                                                      clf_names[0])
 
