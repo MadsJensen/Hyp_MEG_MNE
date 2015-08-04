@@ -94,6 +94,7 @@ bands = dict(theta=[4, 8],
 
 # bands = dict(theta=[4, 8])
 
+# declare result containers
 results_degree = []
 results_CC = []
 
@@ -181,8 +182,7 @@ for band in bands.keys():
                       "obsDiff": observed_diff,
                       "band": band}]
 
-        results_degree.append(pd.DataFrame.from_dict(pvalList))
-        pd.concat(results_degree)
+    results_degree.append(pd.DataFrame.from_dict(pvalList))
 
     #  for CC
     pvalListCC = []
@@ -204,5 +204,8 @@ for band in bands.keys():
                         "obsDiff": observed_diff,
                         "band": band}]
 
-        results_CC.append(pd.DataFrame.from_dict(pvalList))
-        pd.concat(results_CC)
+    results_CC.append(pd.DataFrame.from_dict(pvalList))
+
+
+results_degree = pd.concat(results_degree)
+results_CC = pd.concat(results_CC)
