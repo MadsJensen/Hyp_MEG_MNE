@@ -47,6 +47,51 @@ def load_result(fname):
     return result_clf
 
 
+def make_fname(fname, band="alpha"):
+    name_list = fname.split("_")
+    name_list[5] = band
+
+    return "_".join(name_list)
+
+
+def load_source_result(fname):
+    """
+    Keyword Arguments:
+    name -- the file to be loaded.
+        """
+    bands = ["alpha", "beta", "gamma_low", "gamma_high"]
+    result_clf = []
+    for band in bands:
+        tmp_name = make_fname(fname, band=band)
+        tmp_pd = pd.read_csv(
+            tmp_name,
+            header=None)
+        tmp_pd.columns = ["ROI", "pval"]  # rename columns
+        tmp_pd = tmp_pd.sort("ROI")
+
+        res_score = pd.read_csv(
+            "score_" + tmp_name[2:],
+            header=None)
+
+        tmp_pd["score"] = res_score[1]
+        tmp_pd["rejected"], tmp_pd["pval_corr"] =\
+            fdr_correction(tmp_pd["pval"])
+        tmp_pd.index = range(0, len(tmp_pd))
+
+        tmp_pd["rejected"], tmp_pd["pval_corr"] =\
+            fdr_correction(tmp_pd["pval"])
+
+        ROIs = [roi[:-3] for roi in tmp_pd.ROI]
+        hemi = [roi[-2:] for roi in tmp_pd.ROI]
+        tmp_pd["hemi"] = hemi
+        tmp_pd.ROI = ROIs
+        tmp_pd["Band"] = band
+
+        result_clf.append(tmp_pd)
+
+    return pd.concat(result_clf)
+
+
 # Setup paths and prepare raw data
 hostname = socket.gethostname()
 
@@ -68,16 +113,16 @@ else:
 os.chdir(data_path)
 
 # Get labels for FreeSurfer 'aparc' cortical parcellation with 34 labels/hemi
-labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
-                                    regexp="[G|S]",
-                                    subjects_dir=subjects_dir)
-# labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
-#                                     regexp="Brodmann",
+# labels = mne.read_labels_from_annot('subject_1', parc='aparc.a2009s',
+#                                     regexp="[G|S]",
 #                                     subjects_dir=subjects_dir)
+labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+                                    regexp="Brodmann",
+                                    subjects_dir=subjects_dir)
 
 # load Class csv file
 press_post_clf = load_result(
-    "p_results_DA_press_surf-normal_MNE_0-05_LR_std_mean.csv")
+    "p_results_BA_press_power_alpha_MNE_0-05_LR_std_mean_flip.csv")
 press_post_index =\
     press_post_clf[press_post_clf["rejected"] == True].index.get_values()
 print "Press POST\n", press_post_clf[press_post_clf["rejected"] == True]
@@ -91,14 +136,14 @@ print "Press PRE\n", press_pre_clf[press_pre_clf["rejected"] == True]
 
 
 tone_post_clf = load_result(
-    "p_results_DA_tone_surf-normal_MNE_0-02_LR_std_mean.csv")
+    "p_results_BA_tone_power_alpha_MNE_0-02_LR_nostd_mean_flip.csv")
 tone_post_index =\
     tone_post_clf[tone_post_clf["rejected"] == True].index.get_values()
 print "Tone POST\n", tone_post_clf[tone_post_clf["rejected"] == True]
 
 
 tone_pre_clf = load_result(
-    "p_results_DA_tone_surf-normal_MNE_-05-0_LR_std_mean.csv")
+    "p_results_BA_tone_power_alpha_MNE_-05-0_LR_nostd_mean_flip.csv")
 tone_pre_index =\
     tone_pre_clf[tone_post_clf["rejected"] == True].index.get_values()
 print "Tone PRE\n", tone_pre_clf[tone_pre_clf["rejected"] == True]
@@ -229,3 +274,27 @@ for h, label in enumerate(tone_post_labels):
 for j, label in enumerate(tone_post_labels):
     print label.name
     print "score: %f3" % (tone_post_clf.ix[tone_post_index[0]].score)
+
+
+
+
+
+# load source power bands
+press_post_clf = load_source_result(
+    "p_results_BA_press_power_alpha_MNE_0-05_LR_std_mean_flip.csv")
+press_post_index =\
+    press_post_clf[press_post_clf["rejected"] == True].index.get_values()
+print "Press POST\n", press_post_clf[press_post_clf["rejected"] == True]
+
+press_pre_clf = load_source_result(
+    "p_results_BA_press_power_alpha_MNE_-02-0_LR_nostd_mean_flip.csv")
+press_pre_index =\
+    press_pre_clf[press_pre_clf["rejected"] == True].index.get_values()
+print "Press PRET\n", press_pre_clf[press_pre_clf["rejected"] == True]
+
+tone_post_clf = load_source_result(
+    "p_results_BA_tone_power_alpha_MNE_0-02_LR_nostd_mean_flip.csv")
+tone_post_index =\
+    tone_post_clf[tone_post_clf["rejected"] == True].index.get_values()
+print "Tone POST\n", tone_post_clf[tone_post_clf["rejected"] == True]
+
