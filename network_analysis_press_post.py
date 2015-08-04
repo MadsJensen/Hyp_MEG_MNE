@@ -209,3 +209,8 @@ for band in bands.keys():
 
 results_degree = pd.concat(results_degree)
 results_CC = pd.concat(results_CC)
+
+results_degree.to_csv("./network_connect_res/" +
+                      "network_analysis_press_post_degrees.csv")
+results_CC.to_csv("./network_connect_res/" +
+                  "network_analysis_press_post_ClusterCoef.csv")
