@@ -6,7 +6,7 @@ import socket
 import mne
 import pandas as pd
 
-from nitime.analysis import MTCoherenceAnalyzer
+from nitime.analysis import CoherenceAnalyzer
 from nitime import TimeSeries
 # from mne.stats import fdr_correction
 
@@ -51,7 +51,8 @@ os.chdir(data_path)
 labelTsHypCrop =\
     np.load("labels_ts_hyp_press_post_mean-flip_zscore_resample_crop_BA.npy")
 labelTsNormalCrop =\
-    np.load("labels_ts_normal_press_post_mean-flip_zscore_resample_crop_BA.npy")
+    np.load("labels_ts_normal_press_post_mean-flip_" +
+            "zscore_resample_crop_BA.npy")
 
 # Get labels for FreeSurfer 'aparc' cortical parcellation with 34 labels/hemi
 labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
@@ -75,14 +76,14 @@ for j in range(len(labelTsNormalCrop)):
                       sampling_rate=250)  # epochs_normal.info["sfreq"])
     nits.metadata["roi"] = labels_name
 
-    cohListNormal += [MTCoherenceAnalyzer(nits)]
+    cohListNormal += [CoherenceAnalyzer(nits)]
 
 for j in range(len(labelTsHypCrop)):
     nits = TimeSeries(labelTsHypCrop[j],
                       sampling_rate=250)  # epochs_normal.info["sfreq"])
     nits.metadata["roi"] = labels_name
 
-    cohListHyp += [MTCoherenceAnalyzer(nits)]
+    cohListHyp += [CoherenceAnalyzer(nits)]
 
 # Compute a source estimate per frequency band
 bands = dict(theta=[4, 8],
@@ -211,6 +212,6 @@ results_degree = pd.concat(results_degree)
 results_CC = pd.concat(results_CC)
 
 results_degree.to_csv("./network_connect_res/" +
-                      "network_analysis_press_post_degrees.csv")
+                      "network_analysis_press_post_degrees_Coh.csv")
 results_CC.to_csv("./network_connect_res/" +
-                  "network_analysis_press_post_ClusterCoef.csv")
+                  "network_analysis_press_post_ClusterCoef_Coh.csv")

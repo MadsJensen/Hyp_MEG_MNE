@@ -6,7 +6,7 @@ import socket
 import mne
 import pandas as pd
 
-from nitime.analysis import MTCoherenceAnalyzer
+from nitime.analysis import CoherenceAnalyzer
 from nitime import TimeSeries
 # from mne.stats import fdr_correction
 
@@ -75,14 +75,14 @@ for j in range(len(labelTsNormalCrop)):
                       sampling_rate=250)  # epochs_normal.info["sfreq"])
     nits.metadata["roi"] = labels_name
 
-    cohListNormal += [MTCoherenceAnalyzer(nits)]
+    cohListNormal += [CoherenceAnalyzer(nits)]
 
 for j in range(len(labelTsHypCrop)):
     nits = TimeSeries(labelTsHypCrop[j],
                       sampling_rate=250)  # epochs_normal.info["sfreq"])
     nits.metadata["roi"] = labels_name
 
-    cohListHyp += [MTCoherenceAnalyzer(nits)]
+    cohListHyp += [CoherenceAnalyzer(nits)]
 
 # Compute a source estimate per frequency band
 bands = dict(theta=[4, 8],
@@ -211,6 +211,6 @@ results_degree = pd.concat(results_degree)
 results_CC = pd.concat(results_CC)
 
 results_degree.to_csv("./network_connect_res/" +
-                      "network_analysis_tone_pre_degrees.csv")
+                      "network_analysis_tone_pre_degrees_Coh.csv")
 results_CC.to_csv("./network_connect_res/" +
-                  "network_analysis_tone_pre_ClusterCoef.csv")
+                  "network_analysis_tone_pre_ClusterCoef_Coh.csv")
