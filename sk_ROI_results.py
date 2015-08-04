@@ -281,7 +281,7 @@ for j, label in enumerate(tone_post_labels):
 
 # load source power bands
 press_post_clf = load_source_result(
-    "p_results_BA_press_power_alpha_MNE_0-05_LR_std_mean_flip.csv")
+    "p_results_BA_press_power_alpha_MNE_0-05_LR_nostd_mean_flip.csv")
 press_post_index =\
     press_post_clf[press_post_clf["rejected"] == True].index.get_values()
 print "Press POST\n", press_post_clf[press_post_clf["rejected"] == True]
@@ -298,3 +298,9 @@ tone_post_index =\
     tone_post_clf[tone_post_clf["rejected"] == True].index.get_values()
 print "Tone POST\n", tone_post_clf[tone_post_clf["rejected"] == True]
 
+
+tone_pre_clf = load_source_result(
+    "p_results_BA_tone_power_alpha_MNE_0-02_LR_nostd_mean_flip.csv")
+tone_post_index =\
+    tone_pre_clf [tone_pre_clf ["rejected"] == True].index.get_values()
+print "Tone PRE\n", tone_pre_clf [tone_pre_clf ["rejected"] == True]
