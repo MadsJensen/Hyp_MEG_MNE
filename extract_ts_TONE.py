@@ -95,32 +95,38 @@ for j in range(len(labelTsHyp)):
                                    baseline=(None, -0.7), mode="zscore")]
 
 
-fromTime = np.argmax(stcsNormal[0].times == -0.5)
-toTime = np.argmax(stcsNormal[0].times == 0)
+# fromTime = np.argmax(stcsNormal[0].times == -0.5)
+# toTime = np.argmax(stcsNormal[0].times == 0)
+from_time = np.abs(stcsNormal[0].times - -0.5).argmin()
+to_time = np.abs(stcsNormal[0].times - 0).argmin()
 
 labelTsNormalRescaledCrop = []
 for j in range(len(labelTsNormal)):
-    labelTsNormalRescaledCrop += [labelTsNormalRescaled[j][:, fromTime:toTime]]
+    labelTsNormalRescaledCrop +=\
+        [labelTsNormalRescaled[j][:, from_time:to_time]]
 
 labelTsHypRescaledCrop = []
 for j in range(len(labelTsHyp)):
-    labelTsHypRescaledCrop += [labelTsHypRescaled[j][:, fromTime:toTime]]
+    labelTsHypRescaledCrop += [labelTsHypRescaled[j][:, from_time:to_time]]
 
 np.save("labels_ts_hyp_tone_pre_mean-flip_zscore_resample_crop_BA.npy",
         labelTsHypRescaledCrop)
 np.save("labels_ts_normal_tone_pre_mean-flip_zscore_resample_crop_BA.npy",
         labelTsNormalRescaledCrop)
 
-fromTime = np.argmax(stcsNormal[0].times == 0.)
-toTime = np.argmax(stcsNormal[0].times == 0.2)
+# fromTime = np.argmax(stcsNormal[0].times == 0.)
+# toTime = np.argmax(stcsNormal[0].times == 0.2)
+from_time = np.abs(stcsNormal[0].times - 0).argmin()
+to_time = np.abs(stcsNormal[0].times - 0.2).argmin()
 
 labelTsNormalRescaledCrop = []
 for j in range(len(labelTsNormal)):
-    labelTsNormalRescaledCrop += [labelTsNormalRescaled[j][:, fromTime:toTime]]
+    labelTsNormalRescaledCrop +=\
+        [labelTsNormalRescaled[j][:, from_time:to_time]]
 
 labelTsHypRescaledCrop = []
 for j in range(len(labelTsHyp)):
-    labelTsHypRescaledCrop += [labelTsHypRescaled[j][:, fromTime:toTime]]
+    labelTsHypRescaledCrop += [labelTsHypRescaled[j][:, from_time:to_time]]
 
 np.save("labels_ts_hyp_tone_post_mean-flip_zscore_resample_crop_BA.npy",
         labelTsHypRescaledCrop)
