@@ -11,7 +11,7 @@ from nitime import TimeSeries
 # from mne.stats import fdr_correction
 
 
-# %% Permutation test
+# %% Permutation test.
 def permutation_test(a, b, num_samples, statistic):
     """Returns p-value that statistic for a is different
     from statistc for b."""
@@ -94,7 +94,7 @@ bands = dict(theta=[4, 8],
 
 
 bands = dict(theta=[4, 8])
-             
+
 for band in bands.keys():
     print "\n******************"
     print "\nAnalysing band: %s" % band
@@ -201,7 +201,7 @@ for band in bands.keys():
                       'pval': pval,
                       "obsDiff": observed_diff,
                       "diffs": diffs}]
-        
+
     pickle.dump(pvalListCC,
                 open("network_press_zscore_DKT_MTCOH_%s_0-05_resample_crop_CC.p" % band,
                      "wb"))

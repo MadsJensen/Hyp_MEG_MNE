@@ -167,8 +167,8 @@ for h, clf in enumerate(classifiers):
         y = np.concatenate([np.zeros(len(labelTsNormal)),
                             np.ones(len(labelTsHyp))])
 
-        X = X * 1e11
-        X = preprocessing.scale(X)
+#        X = X * 1e11
+#        X = preprocessing.scale(X)
         cv = StratifiedShuffleSplit(y, test_size=0.2)
         print "Working on: ", label.name
 

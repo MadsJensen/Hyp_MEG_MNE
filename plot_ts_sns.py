@@ -79,7 +79,7 @@ labels_name = [label.name for label in labels]
 labels_single = [labels[-26]]
 
 # find index for start and stop times
-from_time = np.abs(stcs_normal[0].times - -1).argmin()
+from_time = np.abs(stcs_normal[-1].times - -1).argmin()
 to_time = np.abs(stcs_normal[0].times - 1).argmin()
 
 # from_time = np.abs(stcs_normal[0].times - 0).argmin()
@@ -130,13 +130,15 @@ for j in range(len(labelTsNormal)):
     results_pd.append(pd.DataFrame(dict(condition="normal",
                                         time=times * 1e3,
                                         trial=j,
-                                        MNE=labelTsNormal[j][:, from_time:to_time].reshape(-1))))
+                                        MNE=labelTsNormal[j]
+                                        [:, from_time:to_time].reshape(-1))))
 
 for j in range(len(labelTsHyp)):
     results_pd.append(pd.DataFrame(dict(condition="hyp",
                                         time=times * 1e3,
                                         trial=j,
-                                        MNE=labelTsHyp[j][:, from_time:to_time].reshape(-1))))
+                                        MNE=labelTsHyp[j]
+                                        [:, from_time:to_time].reshape(-1))))
 
 results_pd = pd.concat(results_pd)
 

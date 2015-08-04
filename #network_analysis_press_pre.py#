@@ -14,7 +14,6 @@ from nitime import TimeSeries
 # %% Permutation test.
 
 def permutation_test(a, b, num_samples, statistic):
-
     """Returns p-value that statistic for a is different
     from statistc for b."""
 
@@ -94,10 +93,7 @@ bands = dict(theta=[4, 8],
 
 # bands = dict(theta=[4, 8])
 
-# declare result containers
 results_degree = []
-results_CC = []
-
 for band in bands.keys():
     print "\n******************"
     print "\nAnalysing band: %s" % band
@@ -182,8 +178,12 @@ for band in bands.keys():
                       "obsDiff": observed_diff,
                       "band": band}]
 
-    results_degree.append(pd.DataFrame.from_dict(pvalList))
+        results_degree.append(pd.DataFrame.from_dict(pvalList))
+        pd.concat(results_degree)
 
+#    pickle.dump(pvalList,
+#                open("network_press_zscore_DKT_MTCOH_%s_0-05_resample_crop_deg.p" % band,
+#                     "wb"))
     #  for CC
     pvalListCC = []
     for ccNumber in range(binMatrixHyp.shape[0]):
@@ -200,17 +200,10 @@ for band in bands.keys():
             permutation_test(postHyp, postNormal, 10000, np.mean)
 
         pvalListCC += [{'area': labels_name[degreeNumber],
-                        'pval': pval,
-                        "obsDiff": observed_diff,
-                        "band": band}]
+                      'pval': pval,
+                      "obsDiff": observed_diff,
+                      "diffs": diffs}]
 
-    results_CC.append(pd.DataFrame.from_dict(pvalList))
-
-
-results_degree = pd.concat(results_degree)
-results_CC = pd.concat(results_CC)
-
-results_degree.to_csv("./network_connect_res/" +
-                      "network_analysis_press_pre_degrees.csv")
-results_CC.to_csv("./network_connect_res/" +
-                  "network_analysis_press_pre_ClusterCoef.csv")
+#    pickle.dump(pvalListCC,
+#                open("network_press_zscore_DKT_MTCOH_%s_0-05_resample_crop_CC.p" % band,
+#                     "wb"))
