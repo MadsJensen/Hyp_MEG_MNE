@@ -49,7 +49,7 @@ os.chdir(data_path)
 
 # load numpy files
 labelTsHypCrop =\
-    np.load("labels_ts_hyp_press_pre_mean-flip_zscore_resample_crop_ba.npy")
+    np.load("labels_ts_hyp_press_pre_mean-flip_zscore_resample_crop_BA.npy")
 labelTsNormalCrop =\
     np.load("labels_ts_normal_press_pre_mean-flip_zscore_resample_crop_BA.npy")
 
