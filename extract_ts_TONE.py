@@ -63,12 +63,12 @@ stcsHyp = apply_inverse_epochs(epochs_hyp, inverse_hyp, lambda2,
 [stc.resample(250) for stc in stcsHyp]
 
 # Get labels from FreeSurfer cortical parcellation
-# labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
-#                                     regexp="Brodmann",
-#                                     subjects_dir=subjects_dir)
-
-labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
+labels = mne.read_labels_from_annot('subject_1', parc='PALS_B12_Brodmann',
+                                    regexp="Brodmann",
                                     subjects_dir=subjects_dir)
+
+# labels = mne.read_labels_from_annot('subject_1', parc='aparc.DKTatlas40',
+#                                     subjects_dir=subjects_dir)
 
 # Average the source estimates within eachh label using sign-flips to reduce
 # signal cancellations, also here we return a generator
@@ -106,7 +106,23 @@ labelTsHypRescaledCrop = []
 for j in range(len(labelTsHyp)):
     labelTsHypRescaledCrop += [labelTsHypRescaled[j][:, fromTime:toTime]]
 
-np.save("labelTsHypToneMean-flipZscore_resample_crop_DKT.npy",
+np.save("labels_ts_hyp_tone_pre_mean-flip_zscore_resample_crop_BA.npy",
         labelTsHypRescaledCrop)
-np.save("labelTsNormalToneMean-flipZscore_resample_crop_DKT.npy",
+np.save("labels_ts_normal_tone_pre_mean-flip_zscore_resample_crop_BA.npy",
+        labelTsNormalRescaledCrop)
+
+fromTime = np.argmax(stcsNormal[0].times == 0.)
+toTime = np.argmax(stcsNormal[0].times == 0.2)
+
+labelTsNormalRescaledCrop = []
+for j in range(len(labelTsNormal)):
+    labelTsNormalRescaledCrop += [labelTsNormalRescaled[j][:, fromTime:toTime]]
+
+labelTsHypRescaledCrop = []
+for j in range(len(labelTsHyp)):
+    labelTsHypRescaledCrop += [labelTsHypRescaled[j][:, fromTime:toTime]]
+
+np.save("labels_ts_hyp_tone_post_mean-flip_zscore_resample_crop_BA.npy",
+        labelTsHypRescaledCrop)
+np.save("labels_ts_normal_tone_post_mean-flip_zscore_resample_crop_BA.npy",
         labelTsNormalRescaledCrop)
