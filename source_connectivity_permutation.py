@@ -93,14 +93,45 @@ for label in labels:
 
 ts_all = np.vstack([labelTsNormalCrop, labelTsHypCrop])
 
-number_of_permutations = 2
-number_of_repititions = 2
+number_of_permutations = 2000
 index = np.arange(0, 154)
-permutations_results = np.empty(number_of_repititions)
+permutations_results = np.empty(number_of_permutations)
 fmin, fmax = 8, 12
 
 
-for i in range(number_of_repititions):
+diff_permuatation = np.empty([82, 82, number_of_permutations])
+
+
+# diff
+con_normal, freqs_normal, times_normal, n_epochs_normal, n_tapers_normal =\
+        spectral_connectivity(
+             labelTsNormalCrop, method='plv',
+             mode='multitaper',
+             sfreq=250,
+             fmin=fmin, fmax=fmax,
+             faverage=True,
+             tmin=0, tmax=0.5,
+             mt_adaptive=False,
+             n_jobs=1,
+             verbose=None)
+
+con_hyp, freqs_hyp, times_hyp, n_epochs_hyp, n_tapers_hyp =\
+        spectral_connectivity(
+             labelTsHypCrop, method='plv',
+             mode='multitaper',
+             sfreq=250,
+             fmin=fmin, fmax=fmax,
+             faverage=True,
+             tmin=0, tmax=0.5,
+             mt_adaptive=False,
+             n_jobs=1,
+             verbose=None)
+             
+
+diff = con_normal[:, :, 0] - con_hyp[:, :, 0]
+
+
+for i in range(number_of_permutations):
     np.random.shuffle(index)
     tmp_ctl = ts_all[index[:80]]
     tmp_case = ts_all[index[80:]]
@@ -126,10 +157,15 @@ for i in range(number_of_repititions):
              tmin=0, tmax=0.5,
              mt_adaptive=False,
              n_jobs=1)
+             
+    diff_permuatation[:, :, i] = con_ctl[:, :, 0] - con_case[:, :, 0]
 
-    pval, obs_diff, diffs =\
-        permutation_resampling(con_case, con_ctl,
-                               number_of_permutations,
-                               np.mean)
 
-    permutations_results[i] = pval
+pval = np.empty_like(diff)
+
+for h in range(diff.shape[0]):    
+    for j in range(diff.shape[1]):
+        if diff[h,j] != 0:
+            pval[h, j] = np.sum(np.abs(diff[h, j])\
+                 >= np.abs(diff_permuatation[h, j, :]))\
+                 / float(number_of_permutations)
