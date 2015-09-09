@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Sep  9 08:41:17 2015
+Created on Wed Sep  9 08:41:17 2015.
 
 @author: mje
 """
@@ -13,15 +13,17 @@ import mne
 
 from mne.connectivity import spectral_connectivity
 
-
 # from mne.stats import fdr_correction
 
 
 # %% Permutation test.
 def permutation_resampling(case, control, num_samples, statistic):
-    """Returns p-value that statistic for case is different
-    from statistc for control."""
+    """
+    Permutation test.
 
+    Return p-value that statistic for case is different
+    from statistc for control.
+    """
     observed_diff = abs(statistic(case) - statistic(control))
     num_case = len(case)
 
@@ -38,10 +40,12 @@ def permutation_resampling(case, control, num_samples, statistic):
 
 
 def permutation_test(a, b, num_samples, statistic):
+    """
+    Permutation test.
 
-    """Returns p-value that statistic for a is different
-    from statistc for b."""
-
+    Return p-value that statistic for a is different
+    from statistc for b.
+    """
     observed_diff = abs(statistic(b) - statistic(a))
     num_a = len(a)
 
@@ -97,7 +101,7 @@ number_of_permutations = 2000
 index = np.arange(0, 154)
 permutations_results = np.empty(number_of_permutations)
 fmin, fmax = 8, 12
-
+con_method = "wpli"
 
 diff_permuatation = np.empty([82, 82, number_of_permutations])
 
@@ -105,7 +109,7 @@ diff_permuatation = np.empty([82, 82, number_of_permutations])
 # diff
 con_normal, freqs_normal, times_normal, n_epochs_normal, n_tapers_normal =\
         spectral_connectivity(
-             labelTsNormalCrop, method='plv',
+             labelTsNormalCrop, method=con_method,
              mode='multitaper',
              sfreq=250,
              fmin=fmin, fmax=fmax,
@@ -117,7 +121,7 @@ con_normal, freqs_normal, times_normal, n_epochs_normal, n_tapers_normal =\
 
 con_hyp, freqs_hyp, times_hyp, n_epochs_hyp, n_tapers_hyp =\
         spectral_connectivity(
-             labelTsHypCrop, method='plv',
+             labelTsHypCrop, method=con_method,
              mode='multitaper',
              sfreq=250,
              fmin=fmin, fmax=fmax,
@@ -126,7 +130,7 @@ con_hyp, freqs_hyp, times_hyp, n_epochs_hyp, n_tapers_hyp =\
              mt_adaptive=False,
              n_jobs=1,
              verbose=None)
-             
+
 
 diff = con_normal[:, :, 0] - con_hyp[:, :, 0]
 
@@ -138,7 +142,7 @@ for i in range(number_of_permutations):
 
     con_ctl, freqs_ctl, times_ctl, n_epochs_ctl, n_tapers_ctl =\
         spectral_connectivity(
-             tmp_ctl, method='plv',
+             tmp_ctl, method=con_method,
              mode='multitaper',
              sfreq=250,
              fmin=fmin, fmax=fmax,
@@ -149,7 +153,7 @@ for i in range(number_of_permutations):
 
     con_case, freqs_case, times_case, n_epochs_case, n_tapers_case =\
         spectral_connectivity(
-             tmp_case, method='plv',
+             tmp_case, method=con_method,
              mode='multitaper',
              sfreq=250,
              fmin=fmin, fmax=fmax,
@@ -157,15 +161,15 @@ for i in range(number_of_permutations):
              tmin=0, tmax=0.5,
              mt_adaptive=False,
              n_jobs=1)
-             
+
     diff_permuatation[:, :, i] = con_ctl[:, :, 0] - con_case[:, :, 0]
 
 
 pval = np.empty_like(diff)
 
-for h in range(diff.shape[0]):    
+for h in range(diff.shape[0]):
     for j in range(diff.shape[1]):
-        if diff[h,j] != 0:
-            pval[h, j] = np.sum(np.abs(diff[h, j])\
-                 >= np.abs(diff_permuatation[h, j, :]))\
+        if diff[h, j] != 0:
+            pval[h, j] = np.sum(np.abs(diff[h, j]) >= np.abs(
+                diff_permuatation[h, j, :]))\
                  / float(number_of_permutations)
