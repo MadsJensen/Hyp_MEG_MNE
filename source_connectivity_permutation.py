@@ -9,7 +9,7 @@ import numpy.random as npr
 import os
 import socket
 import mne
-import pandas as pd
+# import pandas as pd
 
 from mne.connectivity import spectral_connectivity
 
@@ -91,7 +91,7 @@ for label in labels:
     labels_name += [label.name]
 
 
-ts_all = np.vstack([labelTsNormalCrop,labelTsHypCrop])
+ts_all = np.vstack([labelTsNormalCrop, labelTsHypCrop])
 
 number_of_permutations = 2
 number_of_repititions = 2
@@ -104,34 +104,32 @@ for i in range(number_of_repititions):
     np.random.shuffle(index)
     tmp_ctl = ts_all[index[:80]]
     tmp_case = ts_all[index[80:]]
-    
+
     con_ctl, freqs_ctl, times_ctl, n_epochs_ctl, n_tapers_ctl =\
         spectral_connectivity(
-             tmp_ctl, method='plv', 
-             mode='multitaper', 
+             tmp_ctl, method='plv',
+             mode='multitaper',
              sfreq=250,
              fmin=fmin, fmax=fmax,
              faverage=True,
              tmin=0, tmax=0.5,
              mt_adaptive=False,
              n_jobs=1)
-             
+
     con_case, freqs_case, times_case, n_epochs_case, n_tapers_case =\
         spectral_connectivity(
-             tmp_case, method='plv', 
-             mode='multitaper', 
+             tmp_case, method='plv',
+             mode='multitaper',
              sfreq=250,
              fmin=fmin, fmax=fmax,
              faverage=True,
              tmin=0, tmax=0.5,
              mt_adaptive=False,
              n_jobs=1)
-             
+
     pval, obs_diff, diffs =\
         permutation_resampling(con_case, con_ctl,
                                number_of_permutations,
                                np.mean)
-                               
-   permutation_results[i] = pval
-                              
 
+    permutations_results[i] = pval
